@@ -17,6 +17,9 @@ const Header = () => (
                 <Link className="text-sm font-semibold text-slate-700 hover:text-saffron transition-colors" href="/">Home</Link>
                 <Link className="text-sm font-semibold text-slate-700 hover:text-saffron transition-colors" href="/satsang">Satsang</Link>
                 <Link className="text-sm font-semibold text-slate-700 hover:text-saffron transition-colors" href="/tracker">Progress Tracker</Link>
+                <Link className="text-sm font-semibold text-slate-700 hover:text-saffron transition-colors" href="/admin/post">Admin</Link>
+                <Link className="text-sm font-semibold text-slate-700 hover:text-saffron transition-colors" href="/articles">Available Articles</Link>
+
             </nav>
             <div className="flex items-center gap-4">
                 <button className="hidden sm:flex h-10 items-center justify-center rounded-full px-6 text-sm font-bold text-white shadow-lg shadow-blue-900/20 hover:bg-slate-800 transition-all" style={{ backgroundColor: '#1A365D' }}>

@@ -180,6 +180,8 @@ const phases: RoadmapPhase[] = [
     }
 ];
 
+import Link from 'next/link';
+
 const PhaseCard = ({ phase, index }: { phase: RoadmapPhase, index: number }) => (
     <div className="relative flex flex-col gap-6 rounded-3xl border-2 border-gold/10 bg-white p-8 transition-all hover:shadow-2xl hover:border-gold/30">
         <div className="flex items-center gap-4">
@@ -196,12 +198,20 @@ const PhaseCard = ({ phase, index }: { phase: RoadmapPhase, index: number }) => 
         <div className="h-px w-full bg-gradient-to-r from-transparent via-gold/20 to-transparent"></div>
 
         <ul className="space-y-5">
-            {phase.topics.map((topic, tIndex) => (
-                <li key={tIndex} className="flex gap-4 text-xl font-semibold text-slate-800 group cursor-pointer hover:text-saffron transition-colors">
-                    <span className="text-saffron font-bold opacity-30 shrink-0 text-lg">{String(tIndex + 1).padStart(2, '0')}.</span>
-                    <span className="leading-snug">{topic}</span>
-                </li>
-            ))}
+            {phase.topics.map((topic, tIndex) => {
+                const slug = topic.toLowerCase().replace(/ /g, '-').replace(/[^\w-]/g, '');
+                return (
+                    <li key={tIndex}>
+                        <Link
+                            href={`/articles/${slug}`}
+                            className="flex gap-4 text-xl font-semibold text-slate-800 group cursor-pointer hover:text-saffron transition-colors"
+                        >
+                            <span className="text-saffron font-bold opacity-30 shrink-0 text-lg">{String(tIndex + 1).padStart(2, '0')}.</span>
+                            <span className="leading-snug underline-offset-4 decoration-saffron/30 hover:underline">{topic}</span>
+                        </Link>
+                    </li>
+                );
+            })}
         </ul>
 
         <div className="mt-auto pt-4">
