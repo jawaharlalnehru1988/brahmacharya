@@ -6,8 +6,8 @@ const Footer = () => (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-16">
                 <div className="col-span-1 lg:col-span-1">
                     <div className="flex items-center gap-3 mb-8">
-                        <div className="flex h-10 w-10 items-center justify-center rounded spiritual-gradient text-white">
-                            <span className="material-symbols-outlined text-xl">auto_awesome</span>
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full border border-gold/30 overflow-hidden shadow-sm">
+                            <img src="/lord_krishna.jpeg" alt="Krishna" className="w-full h-full object-cover" />
                         </div>
                         <span className="text-xl font-bold text-spiritual-blue font-serif-title uppercase tracking-wider">Brahmacharya</span>
                     </div>
@@ -60,7 +60,7 @@ const Footer = () => (
                 </div>
             </div>
             <div className="mt-16 pt-8 border-t border-gold/10 flex flex-col sm:flex-row justify-between items-center gap-6">
-                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">© 2024 Krishna Conscious Brahmacharya. All Glories to Sri Guru and Sri Gauranga.</p>
+                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">© 2024 Krishna Conscious Brahmacharya. All Glories to Srila Prabhupada and Lord Krishna.</p>
                 <div className="flex gap-8">
                     <a className="text-[10px] font-bold uppercase tracking-widest text-slate-500 hover:text-saffron" href="#">Privacy Policy</a>
                     <a className="text-[10px] font-bold uppercase tracking-widest text-slate-500 hover:text-saffron" href="#">Terms of Service</a>

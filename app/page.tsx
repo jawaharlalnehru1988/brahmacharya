@@ -7,6 +7,7 @@ import CTA from './components/CTA';
 import Footer from './components/Footer';
 
 import ScripturalSupport from './components/ScripturalSupport';
+import UniversalBrahmacharya from './components/UniversalBrahmacharya';
 
 export default function Home() {
   return (
@@ -14,6 +15,7 @@ export default function Home() {
       <Header />
       <main className="flex-1">
         <Hero />
+        <UniversalBrahmacharya />
         <Pillars />
         <PathOfBhakti />
         <ScripturalSupport />
