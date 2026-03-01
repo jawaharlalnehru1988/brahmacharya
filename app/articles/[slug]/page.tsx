@@ -1,5 +1,7 @@
+export const dynamic = 'force-dynamic';
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { notFound } from 'next/navigation';
 import axios from 'axios';
 import Header from '../../components/Header';
@@ -67,7 +69,7 @@ export default async function ArticlePage({ params }: { params: { slug: string }
                         prose-blockquote:border-l-4 prose-blockquote:border-saffron prose-blockquote:bg-saffron/5 prose-blockquote:py-4 prose-blockquote:px-8 prose-blockquote:rounded-r-xl prose-blockquote:italic
                         prose-li:text-slate-700
                         prose-hr:border-gold/20">
-                        <ReactMarkdown>{article.content}</ReactMarkdown>
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>{article.content}</ReactMarkdown>
                     </div>
 
                     {/* Audio Support */}

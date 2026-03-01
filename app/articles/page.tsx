@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import React from 'react';
 import axios from 'axios';
 import Link from 'next/link';
