@@ -3,34 +3,44 @@ import React from 'react';
 const Hero = () => (
     <section className="relative px-6 py-12 lg:px-20 lg:py-24">
         <div className="mx-auto max-w-7xl">
-            <div className="relative overflow-hidden rounded-[2.5rem] px-8 py-20 lg:px-16 lg:py-24 shadow-2xl border-4 border-gold/20" style={{ backgroundColor: '#1A365D' }}>
-                {/* Authority Background Layer */}
-                <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none opacity-20 group">
-                    <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-saffron/20 to-transparent"></div>
+            <div
+                className="relative overflow-hidden rounded-[2.5rem] px-8 py-20 lg:px-16 lg:py-24 shadow-2xl border-4 border-gold/20"
+                style={{
+                    backgroundImage: "url('/banner.jpg')",
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center'
+                }}
+            >
+                {/* Light Aesthetic Overlay */}
+                <div className="absolute inset-0 z-0 bg-white/70 backdrop-blur-[2px]"></div>
+
+                {/* Authority Background Glow Layer (adjusted for light theme) */}
+                <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none opacity-40 group">
+                    <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-saffron/10 to-transparent"></div>
                 </div>
 
                 <div className="relative z-10 flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
                     {/* Content Left */}
                     <div className="flex-1 text-left lg:pr-8">
-                        <div className="inline-flex items-center gap-2 rounded-full border border-saffron/30 px-4 py-1.5 text-xs font-bold uppercase tracking-widest mb-8" style={{ backgroundColor: 'rgba(255, 153, 51, 0.2)', color: '#FF9933' }}>
+                        <div className="inline-flex items-center gap-2 rounded-full border border-saffron/30 px-4 py-1.5 text-xs font-bold uppercase tracking-widest mb-8" style={{ backgroundColor: 'rgba(255, 153, 51, 0.1)', color: '#FF9933' }}>
                             <span className="material-symbols-outlined text-sm">temple_hindu</span>
                             Eternal Wisdom of Bhakti
                         </div>
-                        <h2 className="text-4xl font-black leading-tight tracking-tight text-white sm:text-5xl lg:text-7xl mb-6 font-serif-title">
-                            Experience the <span style={{ color: '#D4AF37' }}>Higher Taste</span>
+                        <h2 className="text-4xl font-black leading-tight tracking-tight text-spiritual-blue sm:text-5xl lg:text-7xl mb-6 font-serif-title">
+                            Experience the <span style={{ color: '#FF9933' }}>Higher Taste</span>
                         </h2>
-                        <p className="text-xl font-medium leading-relaxed text-slate-200 mb-10 max-w-2xl italic">
+                        <p className="text-xl font-medium leading-relaxed text-slate-600 mb-10 max-w-2xl italic">
                             &quot;By experiencing a higher spiritual taste, one can easily give up the lower tastes of the material world.&quot;
                             <span className="block mt-4 not-italic font-bold" style={{ color: '#FF9933' }}>
                                 Inspired By His Divine Grace A.C. Bhaktivedanta Swami Srila Prabhupada. <br />
-                                <span className="text-sm opacity-80 uppercase tracking-widest">— Dedicated to all sincere followers of him.</span>
+                                <span className="text-sm text-slate-400 uppercase tracking-widest">— Dedicated to all sincere followers of him.</span>
                             </span>
                         </p>
                         <div className="flex flex-wrap gap-4">
-                            <button className="flex h-14 items-center justify-center rounded-xl px-10 text-base font-black text-white shadow-xl shadow-saffron/30 hover:scale-[1.02] transition-transform uppercase tracking-wider" style={{ backgroundColor: '#FF9933' }}>
+                            <button className="flex h-14 items-center justify-center rounded-xl px-10 text-base font-black text-white shadow-xl shadow-saffron/20 hover:scale-[1.02] transition-transform uppercase tracking-wider" style={{ backgroundColor: '#FF9933' }}>
                                 Start Nama Japa
                             </button>
-                            <button className="flex h-14 items-center justify-center rounded-xl border-2 border-gold/50 bg-white/10 px-10 text-base font-bold text-white backdrop-blur-sm hover:bg-white/20 transition-colors uppercase tracking-wider">
+                            <button className="flex h-14 items-center justify-center rounded-xl border-2 border-spiritual-blue/20 bg-white/50 px-10 text-base font-bold text-spiritual-blue backdrop-blur-sm hover:bg-white/80 transition-colors uppercase tracking-wider">
                                 Learn the Science
                             </button>
                         </div>

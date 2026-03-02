@@ -61,6 +61,17 @@ export default async function ArticlePage({ params }: { params: { slug: string }
                         </div>
                     )}
 
+                    {/* Audio Support */}
+                    {article.audioUrl && (
+                        <div className="mt-16 p-8 rounded-3xl bg-saffron/5 border-2 border-dashed border-saffron/20 text-center">
+                            <h4 className="text-sm font-bold uppercase tracking-[0.2em] text-saffron mb-6">Accompanying Audio Lecture</h4>
+                            <audio controls className="w-full max-w-xl mx-auto">
+                                <source src={article.audioUrl} type="audio/mpeg" />
+                                Your browser does not support the audio element.
+                            </audio>
+                        </div>
+                    )}
+
                     {/* Content Section */}
                     <div className="prose prose-stone lg:prose-xl max-w-none 
                         prose-headings:font-serif-title prose-headings:text-spiritual-blue 
@@ -72,16 +83,7 @@ export default async function ArticlePage({ params }: { params: { slug: string }
                         <ReactMarkdown remarkPlugins={[remarkGfm]}>{article.content}</ReactMarkdown>
                     </div>
 
-                    {/* Audio Support */}
-                    {article.audioUrl && (
-                        <div className="mt-16 p-8 rounded-3xl bg-saffron/5 border-2 border-dashed border-saffron/20 text-center">
-                            <h4 className="text-sm font-bold uppercase tracking-[0.2em] text-saffron mb-6">Accompanying Audio Lecture</h4>
-                            <audio controls className="w-full max-w-xl mx-auto">
-                                <source src={article.audioUrl} type="audio/mpeg" />
-                                Your browser does not support the audio element.
-                            </audio>
-                        </div>
-                    )}
+
 
                     <div className="mt-20 pt-12 border-t border-gold/10 flex justify-center">
                         <a href="/" className="flex items-center gap-3 text-saffron font-bold text-xs uppercase tracking-[0.2em] transition-all hover:gap-4">
