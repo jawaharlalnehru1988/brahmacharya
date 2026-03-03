@@ -1,103 +1,156 @@
 import React from 'react';
+import Link from 'next/link';
 
-const UniversalBrahmacharya = () => {
+interface Article {
+    id: number;
+    category: string;
+    title: string;
+    slug: string;
+    created_at: string;
+}
+
+const UniversalBrahmacharya = async () => {
+    let stats = {
+        totalArticles: 0,
+        totalCategories: 0,
+        totalReadingTime: 0,
+        latestSeries: "",
+        categories: [] as { name: string; count: number; icon: string; color: string }[]
+    };
+
+    const CATEGORY_ICONS: Record<string, string> = {
+        "DIGITAL VISUAL STIMULATION TRAPS": "devices",
+        "PSYCHOLOGICAL & NEUROCHEMICAL TRAPS": "psychology",
+        "CONSUMERISM & LIFESTYLE TRAPS": "shopping_bag",
+        "WORKPLACE & SOCIAL ENVIRONMENT TRAPS": "business_center",
+        "MEDIA & ENTERTAINMENT TRAPS": "theaters",
+        "PRABHUPĀDA INSTRUCTIONAL QUOTE THEMES": "format_quote",
+        "VEDIC / GĪTĀ / UPANIṢADIC INSTRUCTIONS": "menu_book",
+        "PURĀṆIC & ITIHĀSA STORIES - CHARACTER CASE STUDIES": "history_edu",
+        "MODERN REAL-LIFE CASE THEMES": "diversity_1"
+    };
+
+    const CATEGORY_COLORS: Record<string, string> = {
+        "DIGITAL VISUAL STIMULATION TRAPS": "text-red-500",
+        "PSYCHOLOGICAL & NEUROCHEMICAL TRAPS": "text-purple-500",
+        "CONSUMERISM & LIFESTYLE TRAPS": "text-amber-500",
+        "WORKPLACE & SOCIAL ENVIRONMENT TRAPS": "text-blue-500",
+        "MEDIA & ENTERTAINMENT TRAPS": "text-indigo-500",
+        "PRABHUPĀDA INSTRUCTIONAL QUOTE THEMES": "text-saffron",
+        "VEDIC / GĪTĀ / UPANIṢADIC INSTRUCTIONS": "text-gold",
+        "PURĀṆIC & ITIHĀSA STORIES - CHARACTER CASE STUDIES": "text-spiritual-blue",
+        "MODERN REAL-LIFE CASE THEMES": "text-emerald-500"
+    };
+
+    try {
+        const response = await fetch('https://api.askharekrishna.com/api/v1/brahmhacarya/', {
+            next: { revalidate: 3600 }
+        });
+        const articles: Article[] = await response.json();
+
+        stats.totalArticles = articles.length;
+        stats.totalReadingTime = articles.length * 5; // Approx 5 mins per article
+
+        const catMap: Record<string, number> = {};
+        articles.forEach(a => {
+            catMap[a.category] = (catMap[a.category] || 0) + 1;
+        });
+
+        stats.totalCategories = Object.keys(catMap).length;
+        stats.categories = Object.entries(catMap).map(([name, count]) => ({
+            name,
+            count,
+            icon: CATEGORY_ICONS[name.toUpperCase()] || "auto_stories",
+            color: CATEGORY_COLORS[name.toUpperCase()] || "text-slate-500"
+        })).sort((a, b) => b.count - a.count);
+
+        stats.latestSeries = articles[articles.length - 1]?.category || "Modern Cases";
+
+    } catch (e) {
+        console.error("Dashboard Fetch Error:", e);
+    }
+
     return (
-        <section className="relative overflow-hidden bg-background-light py-24 lg:py-32">
-            {/* Background Decorative Elements */}
-            <div className="absolute top-0 left-0 h-96 w-96 -translate-x-1/2 -translate-y-1/2 rounded-full bg-saffron/5 blur-3xl"></div>
-            <div className="absolute bottom-0 right-0 h-96 w-96 translate-x-1/2 translate-y-1/2 rounded-full bg-spiritual-blue/5 blur-3xl"></div>
+        <section className="relative overflow-hidden bg-white py-24 lg:py-32">
+            {/* Background Decorations */}
+            <div className="absolute top-0 right-0 h-[600px] w-[600px] rounded-full bg-saffron/5 blur-[120px] -mr-48 -mt-48"></div>
+            <div className="absolute bottom-0 left-0 h-[600px] w-[600px] rounded-full bg-spiritual-blue/5 blur-[120px] -ml-48 -mb-48"></div>
 
             <div className="container relative mx-auto px-6 lg:px-20">
-                <div className="flex flex-col items-center text-center mb-16 lg:mb-20">
-                    <span className="text-sm font-bold uppercase tracking-[0.4em] text-saffron mb-4">The Universal Dharma</span>
-                    <h2 className="text-4xl font-bold tracking-tight text-spiritual-blue sm:text-6xl font-serif-title mb-8 max-w-4xl">
-                        Brahmacharya is <span className="text-saffron italic">Consciousness</span>, Not Just Biology
-                    </h2>
-                    <div className="h-1.5 w-24 bg-gold rounded-full mb-10"></div>
-                    <p className="max-w-3xl text-xl font-medium leading-relaxed text-slate-600">
-                        A common misconception limits Brahmacharya to young students. In reality, it is the foundational behavior for every human being seeking to connect with the Divine.
-                    </p>
-                </div>
+                <div className="flex flex-col lg:flex-row items-center justify-between gap-16 mb-24">
+                    <div className="max-w-2xl text-center lg:text-left">
+                        <span className="text-sm font-bold uppercase tracking-[0.4em] text-saffron mb-6 inline-block">The Global Library</span>
+                        <h2 className="text-4xl font-bold tracking-tight text-spiritual-blue sm:text-6xl font-serif-title mb-8 leading-tight">
+                            Your Personal <span className="text-saffron italic underline decoration-gold/30">Dashboard</span> for Transformation
+                        </h2>
+                        <p className="text-xl font-medium leading-relaxed text-slate-600 mb-10">
+                            The most comprehensive digital repository of spiritual resilience, blending clinical neuroscience with ancient historical cases. Your journey is mapped, tracked, and supported here.
+                        </p>
 
-                <div className="relative max-w-6xl mx-auto mt-8">
-                    {/* Decorative Background Lines (Desktop only) */}
-                    <div className="hidden lg:block absolute inset-0 pointer-events-none">
-                        <div className="absolute top-1/2 left-0 w-full h-px bg-gradient-to-r from-transparent via-gold/30 to-transparent"></div>
-                        <div className="absolute left-1/2 top-0 w-px h-full bg-gradient-to-b from-transparent via-gold/30 to-transparent"></div>
-                        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-12 w-12 bg-background-light border border-gold/20 rounded-full flex items-center justify-center rotate-45">
-                            <div className="h-8 w-8 border border-gold/40 flex items-center justify-center">
-                                <span className="material-symbols-outlined text-gold text-sm -rotate-45">star</span>
-                            </div>
-                        </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-y-16 lg:gap-y-24 gap-x-20 relative z-10">
-                        {/* Age Detail */}
-                        <div className="flex flex-col items-center text-center px-4 lg:px-10 group">
-                            <div className="mb-8 text-saffron transition-transform group-hover:scale-110 duration-500">
-                                <span className="material-symbols-outlined text-6xl opacity-30">history_toggle_off</span>
+                    {/* Stats Grid */}
+                    <div className="grid grid-cols-2 gap-6 w-full lg:w-auto">
+                        <div className="bg-white border border-slate-100 p-8 rounded-[2.5rem] shadow-xl shadow-slate-200/50 flex flex-col items-center text-center group hover:-translate-y-2 transition-transform">
+                            <span className="text-5xl font-black text-spiritual-blue mb-2 font-serif-title">{stats.totalArticles}</span>
+                            <span className="text-xs font-bold uppercase tracking-widest text-slate-400">Total Articles</span>
+                            <div className="mt-4 h-1.5 w-12 bg-saffron rounded-full overflow-hidden">
+                                <div className="h-full w-2/3 bg-gold animate-pulse"></div>
                             </div>
-                            <h4 className="text-2xl font-bold text-spiritual-blue font-serif-title mb-4 italic tracking-wide">Beyond Age</h4>
-                            <p className="text-slate-600 leading-relaxed font-medium">
-                                From the curious child to the wise elder. Purity of thought and action is the catalyst for intelligence at any stage of life.
-                            </p>
                         </div>
-
-                        {/* Gender Detail */}
-                        <div className="flex flex-col items-center text-center px-4 lg:px-10 group">
-                            <div className="mb-8 text-rose-400 transition-transform group-hover:scale-110 duration-500">
-                                <span className="material-symbols-outlined text-6xl opacity-30">diversity_3</span>
-                            </div>
-                            <h4 className="text-2xl font-bold text-spiritual-blue font-serif-title mb-4 italic tracking-wide">Inclusive of All</h4>
-                            <p className="text-slate-600 leading-relaxed font-medium">
-                                The soul has no gender. Brahmacharya is the internal dignity (Śaucam) that empowers both men and women on their spiritual journey.
-                            </p>
+                        <div className="bg-white border border-slate-100 p-8 rounded-[2.5rem] shadow-xl shadow-slate-200/50 flex flex-col items-center text-center group hover:-translate-y-2 transition-transform">
+                            <span className="text-5xl font-black text-gold mb-2 font-serif-title">{stats.totalCategories}</span>
+                            <span className="text-xs font-bold uppercase tracking-widest text-slate-400">Subject Categories</span>
+                            <div className="mt-4 h-1.5 w-12 bg-gold rounded-full"></div>
                         </div>
-
-                        {/* Status Detail */}
-                        <div className="flex flex-col items-center text-center px-4 lg:px-10 group">
-                            <div className="mb-8 text-amber-500 transition-transform group-hover:scale-110 duration-500">
-                                <span className="material-symbols-outlined text-6xl opacity-30">work</span>
-                            </div>
-                            <h4 className="text-2xl font-bold text-spiritual-blue font-serif-title mb-4 italic tracking-wide">Beyond Labels</h4>
-                            <p className="text-slate-600 leading-relaxed font-medium">
-                                Caste, community, or professional designation—none are barriers. It is a universal human quality that demands respect and practice by all.
-                            </p>
+                        <div className="bg-white border border-slate-100 p-8 rounded-[2.5rem] shadow-xl shadow-slate-200/50 flex flex-col items-center text-center group hover:-translate-y-2 transition-transform col-span-2 lg:col-span-1">
+                            <span className="text-4xl font-black text-emerald-500 mb-2 font-serif-title">{Math.round(stats.totalReadingTime / 60)}h+</span>
+                            <span className="text-xs font-bold uppercase tracking-widest text-slate-400">Study Hours</span>
                         </div>
-
-                        {/* Consciousness Detail */}
-                        <div className="flex flex-col items-center text-center px-4 lg:px-10 group">
-                            <div className="mb-8 text-emerald-500 transition-transform group-hover:scale-110 duration-500">
-                                <span className="material-symbols-outlined text-6xl opacity-30">psychology_alt</span>
-                            </div>
-                            <h4 className="text-2xl font-bold text-spiritual-blue font-serif-title mb-4 italic tracking-wide">The Real Vow</h4>
-                            <p className="text-slate-600 leading-relaxed font-medium">
-                                It is not just "celibacy," but "conducting the mind in Brahman." It is the art of seeing everyone as a soul, not an object.
-                            </p>
+                        <div className="bg-white border border-slate-100 p-8 rounded-[2.5rem] shadow-xl shadow-slate-200/50 flex flex-col items-center text-center group hover:-translate-y-2 transition-transform col-span-2 lg:col-span-1">
+                            <span className="text-xl font-black text-indigo-500 mb-2 uppercase leading-tight line-clamp-1 truncate max-w-[150px]">{stats.latestSeries.replace(' - CHARACTER CASE STUDIES', '')}</span>
+                            <span className="text-xs font-bold uppercase tracking-widest text-slate-400">Latest Series</span>
                         </div>
                     </div>
                 </div>
 
-                {/* Inspirational Banner */}
-                <div className="mt-20 overflow-hidden rounded-[3rem] bg-spiritual-blue text-white shadow-2xl relative">
-                    <div className="absolute top-0 right-0 h-full w-1/2 spiritual-gradient opacity-10 blur-3xl transform rotate-12"></div>
-                    <div className="relative p-12 lg:p-20 flex flex-col lg:flex-row items-center justify-between gap-10">
-                        <div className="max-w-2xl">
-                            <h3 className="text-3xl lg:text-4xl font-bold font-serif-title mb-6 leading-tight">
-                                "Purity is the strength of a devotee, regardless of their position in the world."
+
+
+                {/* Engagement Banner */}
+                <div className="relative mt-20 group">
+                    <div className="absolute inset-0 bg-gradient-to-r from-spiritual-blue to-indigo-900 rounded-[3.5rem] transform group-hover:scale-[1.01] transition-transform duration-500"></div>
+                    <div className="relative p-12 lg:p-20 flex flex-col lg:flex-row items-center justify-between gap-12 text-white">
+                        <div className="max-w-3xl text-center lg:text-left">
+                            <h3 className="text-3xl lg:text-5xl font-bold font-serif-title mb-6 leading-tight">
+                                Join 2,500+ Seekers Mastering the Mind
                             </h3>
-                            <p className="text-indigo-200 text-lg leading-relaxed">
-                                Whether you are a householder, a student, or a professional, Brahmacharya is the foundation that keeps your consciousness steady amidst the chaos of the material world.
+                            <p className="text-indigo-100 text-lg lg:text-xl font-medium opacity-90 mb-10 leading-relaxed italic">
+                                &quot;Every article is a brick in the fortress of your character. Don&apos;t just read to know; read to transform.&quot;
                             </p>
-                        </div>
-                        <div className="flex flex-col items-center gap-4 text-center lg:items-end lg:text-right">
-                            <div className="flex -space-x-4 mb-4">
-                                <div className="h-14 w-14 rounded-full border-4 border-spiritual-blue bg-slate-300 flex items-center justify-center text-spiritual-blue font-bold text-xs">A</div>
-                                <div className="h-14 w-14 rounded-full border-4 border-spiritual-blue bg-gold/80 flex items-center justify-center text-spiritual-blue font-bold text-xs">M</div>
-                                <div className="h-14 w-14 rounded-full border-4 border-spiritual-blue bg-saffron/80 flex items-center justify-center text-spiritual-blue font-bold text-xs">W</div>
-                                <div className="h-14 w-14 rounded-full border-4 border-spiritual-blue bg-emerald-500/80 flex items-center justify-center text-white font-bold text-xs">∞</div>
+                            <div className="flex flex-wrap items-center justify-center lg:justify-start gap-8">
+                                <div className="flex flex-col">
+                                    <span className="text-3xl font-bold text-gold">{stats.totalArticles}</span>
+                                    <span className="text-xs font-bold uppercase tracking-widest opacity-60">Verified Solutions</span>
+                                </div>
+                                <div className="h-10 w-px bg-white/20 hidden sm:block"></div>
+                                <div className="flex flex-col">
+                                    <span className="text-3xl font-bold text-saffron">{stats.totalCategories}</span>
+                                    <span className="text-xs font-bold uppercase tracking-widest opacity-60">Success Vectors</span>
+                                </div>
+                                <div className="h-10 w-px bg-white/20 hidden sm:block"></div>
+                                <div className="flex flex-col">
+                                    <span className="text-3xl font-bold text-emerald-400">Daily</span>
+                                    <span className="text-xs font-bold uppercase tracking-widest opacity-60">New Insights</span>
+                                </div>
                             </div>
-                            <p className="text-xs font-bold uppercase tracking-widest text-gold">A Movement for Every Soul</p>
+                        </div>
+                        <div className="shrink-0">
+                            <Link
+                                href="/join-sangha"
+                                className="inline-flex bg-gold text-white font-black px-12 py-6 rounded-full text-lg shadow-2xl shadow-gold/20 hover:bg-saffron hover:-translate-y-2 transition-all uppercase tracking-widest no-underline"
+                            >
+                                Start Your Path
+                            </Link>
                         </div>
                     </div>
                 </div>

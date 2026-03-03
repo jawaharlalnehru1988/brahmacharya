@@ -36,14 +36,7 @@ const Hero = () => (
                                 <span className="text-sm text-slate-400 uppercase tracking-widest">— Dedicated to all sincere followers of him.</span>
                             </span>
                         </p>
-                        <div className="flex flex-wrap gap-4">
-                            <button className="flex h-14 items-center justify-center rounded-xl px-10 text-base font-black text-white shadow-xl shadow-saffron/20 hover:scale-[1.02] transition-transform uppercase tracking-wider" style={{ backgroundColor: '#FF9933' }}>
-                                Start Nama Japa
-                            </button>
-                            <button className="flex h-14 items-center justify-center rounded-xl border-2 border-spiritual-blue/20 bg-white/50 px-10 text-base font-bold text-spiritual-blue backdrop-blur-sm hover:bg-white/80 transition-colors uppercase tracking-wider">
-                                Learn the Science
-                            </button>
-                        </div>
+
                     </div>
 
                     {/* Authority Images Right */}

@@ -16,9 +16,9 @@ export default function Home() {
       <main className="flex-1">
         <Hero />
         <UniversalBrahmacharya />
+        <ScripturalSupport />
         <Pillars />
         <PathOfBhakti />
-        <ScripturalSupport />
         <CTA />
       </main>
       <Footer />

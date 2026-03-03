@@ -1,149 +1,47 @@
 import React from 'react';
+import Link from 'next/link';
+
+interface Article {
+    id: number;
+    title: string;
+    slug: string;
+    category: string;
+}
+
+interface TrapItem {
+    title: string;
+    slug: string;
+}
 
 interface TrapCategory {
     title: string;
     icon: string;
-    items: string[];
+    items: TrapItem[];
     colorScheme: string;
 }
 
-const trapCategories: TrapCategory[] = [
-    {
-        title: "DIGITAL VISUAL STIMULATION TRAPS",
+const CATEGORY_METADATA: Record<string, { icon: string; colorScheme: string }> = {
+    "DIGITAL VISUAL STIMULATION TRAPS": {
         icon: "devices",
-        colorScheme: "border-red-100 bg-red-50/30 text-red-600",
-        items: [
-            "Instagram Reels Sensual Content Loop",
-            "YouTube Shorts Algorithmic Suggestion Trap",
-            "OTT Platform Thumbnails",
-            "Netflix Romantic Scene Normalization",
-            "Movie Poster Hyper-Sexualisation",
-            "Meme Pages with Hidden Sensuality",
-            "Clickbait Thumbnail Psychology",
-            "Anime Fan Service Exposure",
-            "Fashion Influencer Culture",
-            "Dating App Profile Browsing",
-            "“Soft-Core” Social Media Pages",
-            "Auto-Playing Advertisements",
-            "Gym Transformation Videos",
-            "Beauty Product Ads",
-            "Music Video Objectification",
-            "Dance Reel Culture",
-            "Streaming Platform Recommendation Engine",
-            "AI Generated Influencer Models",
-            "VR-Based Adult Immersion",
-            "Gaming Character Sexualisation"
-        ]
+        colorScheme: "border-red-100 bg-red-50/30 text-red-600"
     },
-    {
-        title: "PSYCHOLOGICAL & NEUROCHEMICAL TRAPS",
+    "PSYCHOLOGICAL & NEUROCHEMICAL TRAPS": {
         icon: "psychology",
-        colorScheme: "border-purple-100 bg-purple-50/30 text-purple-600",
-        items: [
-            "Dopamine Reward Loops",
-            "Infinite Scroll Design",
-            "Variable Reward Notifications",
-            "Loneliness Amplification via Social Media",
-            "FOMO (Fear of Missing Out)",
-            "Validation Seeking via Likes",
-            "Comparison Mindset",
-            "Escapism through Entertainment",
-            "Binge Watching",
-            "Emotional Numbing via Content",
-            "Instant Gratification Conditioning",
-            "Habitual Phone Checking",
-            "Blue Light Sleep Disruption",
-            "Sexual Curiosity Marketing",
-            "Attention Fragmentation",
-            "Emotional Trigger Ads",
-            "Night-Time Phone Usage",
-            "Idle Time Content Consumption",
-            "Stress-Induced Browsing",
-            "Algorithmic Behaviour Shaping"
-        ]
+        colorScheme: "border-purple-100 bg-purple-50/30 text-purple-600"
     },
-    {
-        title: "CONSUMERISM & LIFESTYLE TRAPS",
+    "CONSUMERISM & LIFESTYLE TRAPS": {
         icon: "shopping_bag",
-        colorScheme: "border-amber-100 bg-amber-50/30 text-amber-600",
-        items: [
-            "Fashion Industry Body Image Marketing",
-            "Perfume Ads Sensual Messaging",
-            "Gym Vanity Culture",
-            "Cosmetic Industry Seduction Branding",
-            "Dating Culture Commercialization",
-            "Party & Nightlife Promotion",
-            "Alcohol as Social Lubricant",
-            "Fast Food Overstimulation",
-            "Luxury Lifestyle Aspiration",
-            "Relationship Goal Fantasies",
-            "Influencer Couple Culture",
-            "Hookup Normalisation",
-            "Valentine's Day Commercial Messaging",
-            "Wedding Glamour Marketing",
-            "Pornified Advertising",
-            "Beauty Pageant Ideology",
-            "Sexual Liberation Narratives",
-            "Pop Culture Romance Tropes",
-            "“You Deserve Pleasure” Marketing",
-            "Romantic Song Addiction"
-        ]
+        colorScheme: "border-amber-100 bg-amber-50/30 text-amber-600"
     },
-    {
-        title: "WORKPLACE & SOCIAL ENVIRONMENT TRAPS",
+    "WORKPLACE & SOCIAL ENVIRONMENT TRAPS": {
         icon: "business_center",
-        colorScheme: "border-blue-100 bg-blue-50/30 text-blue-600",
-        items: [
-            "Corporate Mixed Socialization",
-            "Casual Flirting Culture",
-            "Office Parties",
-            "Team Outings",
-            "Informal Dress Norms",
-            "Gossip Networks",
-            "Dating Among Colleagues",
-            "Social Drinking Pressure",
-            "Workplace Stress Escapism",
-            "Late Night Work Isolation",
-            "Travel-Based Temptations",
-            "Business Conferences",
-            "Hotel Room Privacy",
-            "Fitness Club Interaction",
-            "Co-Working Spaces",
-            "Commute-Based Exposure",
-            "Advertising Billboards",
-            "Public Transport Displays",
-            "Mall Walk-Through Triggers",
-            "College Campus Culture"
-        ]
+        colorScheme: "border-blue-100 bg-blue-50/30 text-blue-600"
     },
-    {
-        title: "MEDIA & ENTERTAINMENT TRAPS",
+    "MEDIA & ENTERTAINMENT TRAPS": {
         icon: "theaters",
-        colorScheme: "border-indigo-100 bg-indigo-50/30 text-indigo-600",
-        items: [
-            "Romantic Web Series",
-            "Stand-Up Comedy Vulgarity",
-            "Reality Shows",
-            "Celebrity Gossip",
-            "Dating Shows",
-            "Love Story Narratives",
-            "Bollywood Sensual Songs",
-            "Western Pop Lyrics",
-            "Erotic Literature",
-            "Fan Fiction Communities",
-            "Podcast Discussions on Casual Relationships",
-            "Online Forums",
-            "Reddit NSFW Spillovers",
-            "Twitch Streaming Culture",
-            "Music Streaming Recommendations",
-            "Short Film Platforms",
-            "Online Chat Rooms",
-            "Fan Edits",
-            "Influencer Vlogs",
-            "Lifestyle YouTube Channels"
-        ]
+        colorScheme: "border-indigo-100 bg-indigo-50/30 text-indigo-600"
     }
-];
+};
 
 const TrapCard = ({ category }: { category: TrapCategory }) => (
     <div className={`flex flex-col rounded-3xl border-2 p-8 transition-all hover:shadow-xl select-text ${category.colorScheme}`}>
@@ -160,16 +58,86 @@ const TrapCard = ({ category }: { category: TrapCategory }) => (
 
         <ul className="grid grid-cols-1 lg:grid-cols-2 gap-x-12 gap-y-6 select-text">
             {category.items.map((item, index) => (
-                <li key={index} className="flex items-center gap-4 text-xl font-semibold text-slate-800 hover:text-black transition-colors lg:py-1 select-text cursor-text">
+                <li key={index} className="flex items-center gap-4 text-xl font-semibold text-slate-800 hover:text-black transition-colors lg:py-1 select-text">
                     <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-current opacity-60"></span>
-                    <span className="leading-snug select-text cursor-text">{item}</span>
+                    <Link
+                        href={`/articles/${item.slug}`}
+                        className="leading-snug select-text cursor-pointer hover:underline decoration-2 underline-offset-4 decoration-current/30"
+                    >
+                        {item.title}
+                    </Link>
                 </li>
             ))}
         </ul>
+
+        <div className="mt-10 pt-8 border-t border-current border-opacity-5">
+            <Link
+                href={`/tracker?category=${encodeURIComponent(category.title)}`}
+                className="inline-flex items-center gap-2 px-8 py-3 rounded-xl border border-current bg-white/50 hover:bg-white transition-all font-bold text-xs uppercase tracking-widest opacity-80"
+            >
+                <span className="material-symbols-outlined text-base">analytics</span>
+                Scan Vulnerabilities
+            </Link>
+        </div>
     </div>
 );
 
-const PathOfBhakti = () => {
+const PathOfBhakti = async () => {
+    let trapCategories: TrapCategory[] = [];
+
+    try {
+        const response = await fetch('https://api.askharekrishna.com/api/v1/brahmhacarya/', {
+            next: { revalidate: 3600 } // Revalidate every hour
+        });
+        const articles: Article[] = await response.json();
+
+        // Group articles by category
+        const groups: Record<string, TrapItem[]> = {};
+
+        articles.forEach(article => {
+            const category = article.category.toUpperCase();
+            if (!groups[category]) {
+                groups[category] = [];
+            }
+
+            // Clean up the title (remove leading numbers like "01. ")
+            const cleanTitle = article.title.replace(/^\d+\.\s*/, '');
+            groups[category].push({
+                title: cleanTitle,
+                slug: article.slug
+            });
+        });
+
+        // Map to TrapCategory structure
+        trapCategories = Object.keys(groups).map(title => {
+            const metadata = CATEGORY_METADATA[title] || {
+                icon: "monitoring",
+                colorScheme: "border-slate-100 bg-slate-50/30 text-slate-600"
+            };
+
+            return {
+                title,
+                icon: metadata.icon,
+                colorScheme: metadata.colorScheme,
+                items: groups[title]
+            };
+        });
+
+        // Sort according to original order if possible
+        const order = Object.keys(CATEGORY_METADATA);
+        trapCategories.sort((a, b) => {
+            const indexA = order.indexOf(a.title);
+            const indexB = order.indexOf(b.title);
+            if (indexA === -1 && indexB === -1) return 0;
+            if (indexA === -1) return 1;
+            if (indexB === -1) return -1;
+            return indexA - indexB;
+        });
+
+    } catch (error) {
+        console.error("Failed to fetch trap categories:", error);
+    }
+
     return (
         <section id="threat-model" className="px-6 py-16 lg:px-20 lg:py-24 bg-slate-50 overflow-hidden min-h-screen">
             <div className="mx-auto max-w-7xl">
