@@ -5,22 +5,41 @@ import Footer from '../components/Footer';
 
 export default function JoinSanghaPage() {
     const [formData, setFormData] = useState({
-        name: '',
+        full_name: '',
         email: '',
-        phone: '',
-        whatsapp: '',
+        phoneNumber: '',
+        whatsappNumber: '',
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsSubmitting(true);
-        // Simulate API call
-        setTimeout(() => {
+        setError(null);
+
+        try {
+            const response = await fetch('https://api.askharekrishna.com/api/v1/brahmhacarya/registration/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(formData),
+            });
+
+            if (response.ok) {
+                setIsSuccess(true);
+            } else {
+                const data = await response.json();
+                setError(data.message || 'Registration failed. Please try again.');
+            }
+        } catch (err) {
+            setError('An error occurred. Please check your connection and try again.');
+            console.error('Registration error:', err);
+        } finally {
             setIsSubmitting(false);
-            setIsSuccess(true);
-        }, 1500);
+        }
     };
 
     return (
@@ -51,8 +70,8 @@ export default function JoinSanghaPage() {
                                         <input
                                             required
                                             type="text"
-                                            value={formData.name}
-                                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                            value={formData.full_name}
+                                            onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
                                             className="w-full rounded-2xl border-slate-100 bg-slate-50 px-6 py-4 text-sm focus:border-saffron focus:ring-saffron transition-all"
                                             placeholder="Your Name"
                                         />
@@ -76,8 +95,8 @@ export default function JoinSanghaPage() {
                                         <input
                                             required
                                             type="tel"
-                                            value={formData.phone}
-                                            onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                                            value={formData.phoneNumber}
+                                            onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
                                             className="w-full rounded-2xl border-slate-100 bg-slate-50 px-6 py-4 text-sm focus:border-saffron focus:ring-saffron transition-all"
                                             placeholder="+91 00000 00000"
                                         />
@@ -87,13 +106,19 @@ export default function JoinSanghaPage() {
                                         <input
                                             required
                                             type="tel"
-                                            value={formData.whatsapp}
-                                            onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })}
+                                            value={formData.whatsappNumber}
+                                            onChange={(e) => setFormData({ ...formData, whatsappNumber: e.target.value })}
                                             className="w-full rounded-2xl border-slate-100 bg-slate-50 px-6 py-4 text-sm focus:border-saffron focus:ring-saffron transition-all"
                                             placeholder="For daily instructions"
                                         />
                                     </div>
                                 </div>
+
+                                {error && (
+                                    <div className="bg-red-50 text-red-600 p-4 rounded-2xl text-sm font-medium border border-red-100 animate-shake">
+                                        {error}
+                                    </div>
+                                )}
 
                                 <div className="bg-indigo-50/50 rounded-3xl p-6 border border-indigo-100">
                                     <p className="text-xs text-indigo-800 font-medium leading-relaxed">
@@ -115,7 +140,7 @@ export default function JoinSanghaPage() {
                             <div className="h-20 w-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-8">
                                 <span className="material-symbols-outlined text-5xl">check_circle</span>
                             </div>
-                            <h2 className="text-3xl font-bold text-spiritual-blue font-serif-title mb-4">Hari Bol, {formData.name.split(' ')[0]}!</h2>
+                            <h2 className="text-3xl font-bold text-spiritual-blue font-serif-title mb-4">Hari Bol, {formData.full_name.split(' ')[0]}!</h2>
                             <p className="text-slate-600 mb-10 max-w-sm mx-auto">
                                 You have successfully registered for the Brahmacharya Sangha. You will receive a confirmation message on WhatsApp shortly.
                             </p>

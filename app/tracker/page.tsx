@@ -186,10 +186,10 @@ function TrackerContent() {
                             onClick={() => setActiveZone(null)}
                         ></div>
 
-                        <div className="w-full max-w-2xl bg-white rounded-[3rem] p-10 lg:p-16 shadow-2xl relative z-10 animate-scale-up">
+                        <div className="w-full max-w-2xl bg-white rounded-[3rem] p-8 lg:p-12 shadow-2xl relative z-10 animate-scale-up max-h-[92vh] overflow-y-auto flex flex-col my-4">
                             <button
                                 onClick={() => setActiveZone(null)}
-                                className="absolute top-8 right-8 h-10 w-10 flex items-center justify-center rounded-full hover:bg-slate-100 text-slate-400 transition-all"
+                                className="absolute top-4 right-4 h-10 w-10 flex items-center justify-center rounded-full hover:bg-slate-100 text-slate-400 transition-all z-20"
                             >
                                 <span className="material-symbols-outlined">close</span>
                             </button>
@@ -208,15 +208,15 @@ function TrackerContent() {
                                 <h2 className="text-2xl lg:text-3xl font-bold text-spiritual-blue font-serif-title leading-snug mb-12">
                                     What is your rating in understanding and planning for implementation in <span className="text-saffron italic">&quot;{activeArticles[auditStep].title.replace(/^\d+\.\s*/, '')}&quot;</span>?
                                 </h2>
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
                                     {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((val) => (
                                         <button
                                             key={val}
                                             onClick={() => handleAuditOption(val * 10)}
-                                            className="group flex flex-col items-center gap-3 p-6 rounded-2xl border-2 border-slate-50 bg-slate-50/50 hover:border-saffron hover:bg-white transition-all scale-100 active:scale-95"
+                                            className="group flex flex-col items-center gap-1 p-4 rounded-2xl border-2 border-slate-50 bg-slate-50/50 hover:border-saffron hover:bg-white transition-all scale-100 active:scale-95"
                                         >
-                                            <span className="text-2xl font-black text-slate-300 group-hover:text-saffron">{val}</span>
-                                            <span className="text-[10px] uppercase font-bold tracking-widest opacity-0 group-hover:opacity-100 text-saffron">Rate</span>
+                                            <span className="text-xl font-black text-slate-300 group-hover:text-saffron">{val}</span>
+                                            <span className="text-[9px] uppercase font-bold tracking-widest opacity-0 group-hover:opacity-100 text-saffron">Rate</span>
                                         </button>
                                     ))}
                                 </div>
