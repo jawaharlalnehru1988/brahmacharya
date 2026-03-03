@@ -146,23 +146,23 @@ const trapCategories: TrapCategory[] = [
 ];
 
 const TrapCard = ({ category }: { category: TrapCategory }) => (
-    <div className={`flex flex-col rounded-3xl border-2 p-8 transition-all hover:shadow-xl ${category.colorScheme}`}>
-        <div className="flex items-center gap-4 mb-6">
+    <div className={`flex flex-col rounded-3xl border-2 p-8 transition-all hover:shadow-xl select-text ${category.colorScheme}`}>
+        <div className="flex items-center gap-4 mb-6 select-text">
             <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white shadow-sm border border-current opacity-80">
                 <span className="material-symbols-outlined text-2xl">{category.icon}</span>
             </div>
-            <h4 className="text-lg font-bold tracking-tight font-serif-title uppercase leading-tight">
+            <h4 className="text-lg font-bold tracking-tight font-serif-title uppercase leading-tight select-text">
                 {category.title}
             </h4>
         </div>
 
         <div className="h-px w-full bg-current opacity-10 mb-6"></div>
 
-        <ul className="grid grid-cols-1 lg:grid-cols-2 gap-x-12 gap-y-6">
+        <ul className="grid grid-cols-1 lg:grid-cols-2 gap-x-12 gap-y-6 select-text">
             {category.items.map((item, index) => (
-                <li key={index} className="flex items-center gap-4 text-xl font-semibold text-slate-800 hover:text-black transition-colors lg:py-1">
+                <li key={index} className="flex items-center gap-4 text-xl font-semibold text-slate-800 hover:text-black transition-colors lg:py-1 select-text cursor-text">
                     <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-current opacity-60"></span>
-                    <span className="leading-snug">{item}</span>
+                    <span className="leading-snug select-text cursor-text">{item}</span>
                 </li>
             ))}
         </ul>

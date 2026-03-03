@@ -19,49 +19,62 @@ const UniversalBrahmacharya = () => {
                     </p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                    {/* Age Card */}
-                    <div className="group relative rounded-[2.5rem] bg-white p-10 shadow-xl border border-gold/10 transition-all hover:-translate-y-2 hover:shadow-2xl hover:border-gold/30">
-                        <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600">
-                            <span className="material-symbols-outlined text-4xl">history_toggle_off</span>
+                <div className="relative max-w-6xl mx-auto mt-8">
+                    {/* Decorative Background Lines (Desktop only) */}
+                    <div className="hidden lg:block absolute inset-0 pointer-events-none">
+                        <div className="absolute top-1/2 left-0 w-full h-px bg-gradient-to-r from-transparent via-gold/30 to-transparent"></div>
+                        <div className="absolute left-1/2 top-0 w-px h-full bg-gradient-to-b from-transparent via-gold/30 to-transparent"></div>
+                        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-12 w-12 bg-background-light border border-gold/20 rounded-full flex items-center justify-center rotate-45">
+                            <div className="h-8 w-8 border border-gold/40 flex items-center justify-center">
+                                <span className="material-symbols-outlined text-gold text-sm -rotate-45">star</span>
+                            </div>
                         </div>
-                        <h4 className="text-2xl font-bold text-spiritual-blue font-serif-title mb-4">Beyond Age</h4>
-                        <p className="text-slate-600 text-sm leading-relaxed">
-                            From the curious child to the wise elder. Purity of thought and action is the catalyst for intelligence at any stage of life.
-                        </p>
                     </div>
 
-                    {/* Gender Card */}
-                    <div className="group relative rounded-[2.5rem] bg-white p-10 shadow-xl border border-gold/10 transition-all hover:-translate-y-2 hover:shadow-2xl hover:border-gold/30">
-                        <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-rose-50 text-rose-600">
-                            <span className="material-symbols-outlined text-4xl">diversity_3</span>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-y-16 lg:gap-y-24 gap-x-20 relative z-10">
+                        {/* Age Detail */}
+                        <div className="flex flex-col items-center text-center px-4 lg:px-10 group">
+                            <div className="mb-8 text-saffron transition-transform group-hover:scale-110 duration-500">
+                                <span className="material-symbols-outlined text-6xl opacity-30">history_toggle_off</span>
+                            </div>
+                            <h4 className="text-2xl font-bold text-spiritual-blue font-serif-title mb-4 italic tracking-wide">Beyond Age</h4>
+                            <p className="text-slate-600 leading-relaxed font-medium">
+                                From the curious child to the wise elder. Purity of thought and action is the catalyst for intelligence at any stage of life.
+                            </p>
                         </div>
-                        <h4 className="text-2xl font-bold text-spiritual-blue font-serif-title mb-4">Inclusive of All</h4>
-                        <p className="text-slate-600 text-sm leading-relaxed">
-                            The soul has no gender. Brahmacharya is the internal dignity (Śaucam) that empowers both men and women on their spiritual journey.
-                        </p>
-                    </div>
 
-                    {/* Status Card */}
-                    <div className="group relative rounded-[2.5rem] bg-white p-10 shadow-xl border border-gold/10 transition-all hover:-translate-y-2 hover:shadow-2xl hover:border-gold/30">
-                        <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-50 text-amber-600">
-                            <span className="material-symbols-outlined text-4xl">work</span>
+                        {/* Gender Detail */}
+                        <div className="flex flex-col items-center text-center px-4 lg:px-10 group">
+                            <div className="mb-8 text-rose-400 transition-transform group-hover:scale-110 duration-500">
+                                <span className="material-symbols-outlined text-6xl opacity-30">diversity_3</span>
+                            </div>
+                            <h4 className="text-2xl font-bold text-spiritual-blue font-serif-title mb-4 italic tracking-wide">Inclusive of All</h4>
+                            <p className="text-slate-600 leading-relaxed font-medium">
+                                The soul has no gender. Brahmacharya is the internal dignity (Śaucam) that empowers both men and women on their spiritual journey.
+                            </p>
                         </div>
-                        <h4 className="text-2xl font-bold text-spiritual-blue font-serif-title mb-4">Beyond Labels</h4>
-                        <p className="text-slate-600 text-sm leading-relaxed">
-                            Caste, community, or professional designation—none are barriers. It is a universal human quality that demands respect and practice by all.
-                        </p>
-                    </div>
 
-                    {/* Consciousness Card */}
-                    <div className="group relative rounded-[2.5rem] bg-white p-10 shadow-xl border border-gold/10 transition-all hover:-translate-y-2 hover:shadow-2xl hover:border-gold/30">
-                        <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
-                            <span className="material-symbols-outlined text-4xl">psychology_alt</span>
+                        {/* Status Detail */}
+                        <div className="flex flex-col items-center text-center px-4 lg:px-10 group">
+                            <div className="mb-8 text-amber-500 transition-transform group-hover:scale-110 duration-500">
+                                <span className="material-symbols-outlined text-6xl opacity-30">work</span>
+                            </div>
+                            <h4 className="text-2xl font-bold text-spiritual-blue font-serif-title mb-4 italic tracking-wide">Beyond Labels</h4>
+                            <p className="text-slate-600 leading-relaxed font-medium">
+                                Caste, community, or professional designation—none are barriers. It is a universal human quality that demands respect and practice by all.
+                            </p>
                         </div>
-                        <h4 className="text-2xl font-bold text-spiritual-blue font-serif-title mb-4">The Real Vow</h4>
-                        <p className="text-slate-600 text-sm leading-relaxed">
-                            It is not just "celibacy," but "conducting the mind in Brahman." It is the art of seeing everyone as a soul, not an object.
-                        </p>
+
+                        {/* Consciousness Detail */}
+                        <div className="flex flex-col items-center text-center px-4 lg:px-10 group">
+                            <div className="mb-8 text-emerald-500 transition-transform group-hover:scale-110 duration-500">
+                                <span className="material-symbols-outlined text-6xl opacity-30">psychology_alt</span>
+                            </div>
+                            <h4 className="text-2xl font-bold text-spiritual-blue font-serif-title mb-4 italic tracking-wide">The Real Vow</h4>
+                            <p className="text-slate-600 leading-relaxed font-medium">
+                                It is not just "celibacy," but "conducting the mind in Brahman." It is the art of seeing everyone as a soul, not an object.
+                            </p>
+                        </div>
                     </div>
                 </div>
 

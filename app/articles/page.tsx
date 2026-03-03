@@ -32,6 +32,20 @@ async function getArticles() {
 export default async function ArticlesListPage() {
     const articles: Article[] = await getArticles();
 
+    // Group articles by category
+    const groupedArticles = articles.reduce((acc, article) => {
+        const category = article.category || 'General';
+        if (!acc[category]) {
+            acc[category] = [];
+        }
+        acc[category].push(article);
+        return acc;
+    }, {} as Record<string, Article[]>);
+
+    // Sort categories (optional: you could define a custom order here)
+    const sortedCategories = Object.keys(groupedArticles).sort();
+
+    console.log("[SSR] Rendering ArticlesListPage");
     return (
         <div className="relative flex min-h-screen w-full flex-col bg-background-light">
             <Header />
@@ -47,52 +61,68 @@ export default async function ArticlesListPage() {
                     </div>
 
                     {articles.length > 0 ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-                            {articles.map((article) => (
-                                <Link
-                                    key={article.slug}
-                                    href={`/articles/${article.slug}`}
-                                    className="group flex flex-col bg-white rounded-[2.5rem] overflow-hidden border border-gold/10 transition-all hover:shadow-2xl hover:scale-[1.02]"
-                                >
-                                    {/* Card Image */}
-                                    <div className="relative h-64 overflow-hidden">
-                                        {article.featured_image ? (
-                                            <img
-                                                src={article.featured_image}
-                                                alt={article.title}
-                                                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                                            />
-                                        ) : (
-                                            <div className="w-full h-full spiritual-gradient flex items-center justify-center">
-                                                <span className="material-symbols-outlined text-6xl text-white/30">auto_stories</span>
-                                            </div>
-                                        )}
-                                        <div className="absolute top-6 left-6">
-                                            <span className="px-4 py-1.5 bg-white/90 backdrop-blur-md rounded-full text-[10px] font-bold uppercase tracking-widest text-saffron shadow-sm">
-                                                {article.category || 'Roadmap'}
-                                            </span>
-                                        </div>
+                        <div className="space-y-24">
+                            {sortedCategories.map((category) => (
+                                <section key={category} className="animate-in fade-in slide-in-from-bottom-4 duration-1000">
+                                    <div className="flex items-center gap-6 mb-12">
+                                        <div className="h-px flex-1 bg-gradient-to-r from-transparent via-gold/30 to-gold/50"></div>
+                                        <h2 className="text-2xl font-bold text-spiritual-blue uppercase tracking-[0.2em] font-serif-title text-center whitespace-nowrap">
+                                            {category}
+                                        </h2>
+                                        <div className="h-px flex-1 bg-gradient-to-l from-transparent via-gold/30 to-gold/50"></div>
                                     </div>
 
-                                    {/* Card Content */}
-                                    <div className="p-8 flex-1 flex flex-col">
-                                        <h3 className="text-xl font-bold text-spiritual-blue font-serif-title mb-4 group-hover:text-saffron transition-colors leading-tight">
-                                            {article.title}
-                                        </h3>
-                                        <p className="text-sm text-slate-600 line-clamp-3 mb-6 flex-1">
-                                            {article.excerpt || "Dive into this article to deepen your understanding of spiritual discipline and sense control."}
-                                        </p>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+                                        {groupedArticles[category]
+                                            .sort((a, b) => (a.order || 0) - (b.order || 0))
+                                            .map((article) => (
+                                                <Link
+                                                    key={article.slug}
+                                                    href={`/articles/${article.slug}`}
+                                                    className="group flex flex-col bg-white rounded-[2.5rem] overflow-hidden border border-gold/10 transition-all hover:shadow-2xl hover:scale-[1.02]"
+                                                >
+                                                    {/* Card Image */}
+                                                    <div className="relative h-64 overflow-hidden">
+                                                        {article.featured_image ? (
+                                                            <img
+                                                                src={article.featured_image}
+                                                                alt={article.title}
+                                                                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                                                            />
+                                                        ) : (
+                                                            <div className="w-full h-full spiritual-gradient flex items-center justify-center">
+                                                                <span className="material-symbols-outlined text-6xl text-white/30">auto_stories</span>
+                                                            </div>
+                                                        )}
+                                                        <div className="absolute top-6 left-6">
+                                                            <span className="px-4 py-1.5 bg-white/90 backdrop-blur-md rounded-full text-[10px] font-bold uppercase tracking-widest text-saffron shadow-sm">
+                                                                {article.category || 'Roadmap'}
+                                                            </span>
+                                                        </div>
+                                                    </div>
 
-                                        <div className="flex items-center justify-between pt-6 border-t border-gold/5">
-                                            <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
-                                                {new Date(article.published_at || article.created_at).toLocaleDateString()}
-                                            </span>
-                                            <span className="flex items-center gap-1 text-saffron font-bold text-xs uppercase tracking-widest">
-                                                Read Article <span className="material-symbols-outlined text-sm">arrow_forward</span>
-                                            </span>
-                                        </div>
+                                                    {/* Card Content */}
+                                                    <div className="p-8 flex-1 flex flex-col">
+                                                        <h3 className="text-xl font-bold text-spiritual-blue font-serif-title mb-4 group-hover:text-saffron transition-colors leading-tight">
+                                                            {article.title}
+                                                        </h3>
+                                                        <p className="text-sm text-slate-600 line-clamp-3 mb-6 flex-1">
+                                                            {article.excerpt || "Dive into this article to deepen your understanding of spiritual discipline and sense control."}
+                                                        </p>
+
+                                                        <div className="flex items-center justify-between pt-6 border-t border-gold/5">
+                                                            <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                                                                {article.published_at ? article.published_at.substring(0, 10) : (article.created_at ? article.created_at.substring(0, 10) : 'Date TBD')}
+                                                            </span>
+                                                            <span className="flex items-center gap-1 text-saffron font-bold text-xs uppercase tracking-widest">
+                                                                Read Article <span className="material-symbols-outlined text-sm">arrow_forward</span>
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </Link>
+                                            ))}
                                     </div>
-                                </Link>
+                                </section>
                             ))}
                         </div>
                     ) : (

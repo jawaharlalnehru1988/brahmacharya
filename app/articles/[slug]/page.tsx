@@ -49,7 +49,10 @@ export default async function ArticlePage({ params }: { params: { slug: string }
                             {article.title}
                         </h1>
                         <div className="flex justify-center items-center gap-6 text-xs font-bold uppercase tracking-widest text-slate-400">
-                            <span className="flex items-center gap-2"><span className="material-symbols-outlined text-sm">calendar_month</span> {new Date(article.published_at || article.created_at).toLocaleDateString()}</span>
+                            <span className="flex items-center gap-2">
+                                <span className="material-symbols-outlined text-sm">calendar_month</span>
+                                {article.published_at ? article.published_at.substring(0, 10) : (article.created_at ? article.created_at.substring(0, 10) : 'Date TBD')}
+                            </span>
                             <span className="flex items-center gap-2 text-gold"><span className="material-symbols-outlined text-sm">stars</span> Priority: {article.order}</span>
                         </div>
                     </div>
