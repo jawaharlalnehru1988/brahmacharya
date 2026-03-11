@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import ReadIndicator from './ReadIndicator';
 
 interface Article {
     id: number;
@@ -60,7 +61,7 @@ const SupportCard = ({ category }: { category: SupportCategory }) => (
         <ul className="grid grid-cols-1 lg:grid-cols-2 gap-x-12 gap-y-6">
             {category.items.map((item, index) => (
                 <li key={index} className="flex items-center gap-4 text-xl font-semibold text-slate-800 hover:text-black transition-colors lg:py-1 group">
-                    <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-current opacity-40 group-hover:scale-125 transition-transform"></span>
+                    <ReadIndicator slug={item.slug} />
                     <Link
                         href={`/articles/${item.slug}`}
                         className="leading-snug cursor-pointer hover:underline decoration-2 underline-offset-4 decoration-current/30"

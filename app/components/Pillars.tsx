@@ -1,5 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
+import ReadIndicator from './ReadIndicator';
 
 interface Article {
     id: number;
@@ -52,12 +53,15 @@ const PhaseCard = ({ phase, index }: { phase: RoadmapPhase, index: number }) => 
         <ul className="space-y-5">
             {phase.topics.map((topic, tIndex) => (
                 <li key={tIndex}>
-                    <Link
-                        href={`/articles/${topic.slug}`}
-                        className="flex gap-4 text-xl font-semibold text-slate-800 group cursor-pointer hover:text-saffron transition-colors"
-                    >
-                        <span className="leading-snug underline-offset-4 decoration-saffron/30 hover:underline">{topic.title}</span>
-                    </Link>
+                    <div className="flex items-center gap-4">
+                        <ReadIndicator slug={topic.slug} />
+                        <Link
+                            href={`/articles/${topic.slug}`}
+                            className="flex-1 text-xl font-semibold text-slate-800 group cursor-pointer hover:text-saffron transition-colors"
+                        >
+                            <span className="leading-snug underline-offset-4 decoration-saffron/30 hover:underline">{topic.title}</span>
+                        </Link>
+                    </div>
                 </li>
             ))}
         </ul>

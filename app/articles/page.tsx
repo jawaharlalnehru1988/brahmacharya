@@ -4,6 +4,8 @@ import axios from 'axios';
 import Link from 'next/link';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import ReadStatusBadge from '../components/ReadStatusBadge';
+import { Suspense } from 'react';
 
 interface Article {
     title: string;
@@ -99,6 +101,7 @@ export default async function ArticlesListPage() {
                                                                 {article.category || 'Roadmap'}
                                                             </span>
                                                         </div>
+                                                        <ReadStatusBadge slug={article.slug} />
                                                     </div>
 
                                                     {/* Card Content */}

@@ -1,5 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
+import ReadIndicator from './ReadIndicator';
 
 interface Article {
     id: number;
@@ -59,7 +60,7 @@ const TrapCard = ({ category }: { category: TrapCategory }) => (
         <ul className="grid grid-cols-1 lg:grid-cols-2 gap-x-12 gap-y-6 select-text">
             {category.items.map((item, index) => (
                 <li key={index} className="flex items-center gap-4 text-xl font-semibold text-slate-800 hover:text-black transition-colors lg:py-1 select-text">
-                    <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-current opacity-60"></span>
+                    <ReadIndicator slug={item.slug} />
                     <Link
                         href={`/articles/${item.slug}`}
                         className="leading-snug select-text cursor-pointer hover:underline decoration-2 underline-offset-4 decoration-current/30"

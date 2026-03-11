@@ -4,8 +4,26 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { notFound } from 'next/navigation';
 import axios from 'axios';
+import Link from 'next/link';
 import Header from '../../components/Header';
 import Footer from '../../components/Footer';
+import MarkAsRead from '../../components/MarkAsRead';
+
+interface Article {
+    title: string;
+    slug: string;
+    order: number;
+}
+
+async function getArticles() {
+    try {
+        const response = await axios.get('https://api.askharekrishna.com/api/v1/brahmhacarya/');
+        return Array.isArray(response.data) ? response.data : response.data.results || [];
+    } catch (error) {
+        console.error("Error fetching articles list:", error);
+        return [];
+    }
+}
 
 async function getArticle(slug: string) {
     const url = `https://api.askharekrishna.com/api/v1/brahmhacarya/${slug}/`;
@@ -30,11 +48,21 @@ async function getArticle(slug: string) {
 
 export default async function ArticlePage({ params }: { params: { slug: string } }) {
     const { slug } = await params;
-    const article = await getArticle(slug);
+    const [article, allArticles] = await Promise.all([
+        getArticle(slug),
+        getArticles()
+    ]);
 
     if (!article) {
         notFound();
     }
+
+    // Sort all articles by order to find neighbors
+    const sortedArticles: Article[] = [...allArticles].sort((a, b) => (a.order || 0) - (b.order || 0));
+    const currentIndex = sortedArticles.findIndex(a => a.slug === slug);
+
+    const prevArticle = currentIndex > 0 ? sortedArticles[currentIndex - 1] : null;
+    const nextArticle = currentIndex < sortedArticles.length - 1 ? sortedArticles[currentIndex + 1] : null;
 
     return (
         <div className="relative flex min-h-screen w-full flex-col bg-background-light">
@@ -86,12 +114,46 @@ export default async function ArticlePage({ params }: { params: { slug: string }
                         <ReactMarkdown remarkPlugins={[remarkGfm]}>{article.content}</ReactMarkdown>
                     </div>
 
+                    {/* Mark as Read Component */}
+                    <MarkAsRead slug={slug} title={article.title} />
 
+                    {/* Navigation Suggestions */}
+                    <div className="mt-24 grid grid-cols-1 md:grid-cols-2 gap-8 border-t border-gold/10 pt-16">
+                        {prevArticle ? (
+                            <Link href={`/articles/${prevArticle.slug}`} className="group flex flex-col p-8 rounded-[2rem] border border-gold/5 bg-white shadow-xl hover:shadow-2xl transition-all text-left relative overflow-hidden">
+                                <span className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-slate-400 mb-3 flex items-center gap-2 group-hover:text-saffron transition-colors">
+                                    <span className="material-symbols-outlined text-sm">west</span> Previous Wisdom
+                                </span>
+                                <span className="text-xl font-bold font-serif-title text-spiritual-blue group-hover:text-saffron transition-colors line-clamp-2 leading-tight">
+                                    {prevArticle.title}
+                                </span>
+                                <div className="absolute top-0 left-0 w-1.5 h-full bg-gold/10 group-hover:bg-saffron transition-colors"></div>
+                            </Link>
+                        ) : (
+                            <div className="hidden md:block"></div>
+                        )}
 
-                    <div className="mt-20 pt-12 border-t border-gold/10 flex justify-center">
-                        <a href="/" className="flex items-center gap-3 text-saffron font-bold text-xs uppercase tracking-[0.2em] transition-all hover:gap-4">
-                            <span className="material-symbols-outlined text-sm">west</span> Back to Roadmap
-                        </a>
+                        {nextArticle && (
+                            <Link href={`/articles/${nextArticle.slug}`} className="group flex flex-col p-8 rounded-[2rem] border border-gold/5 bg-white shadow-xl hover:shadow-2xl transition-all text-right relative overflow-hidden">
+                                <span className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-slate-400 mb-3 flex items-center justify-end gap-2 group-hover:text-saffron transition-colors">
+                                    Next Wisdom <span className="material-symbols-outlined text-sm">east</span>
+                                </span>
+                                <span className="text-xl font-bold font-serif-title text-spiritual-blue group-hover:text-saffron transition-colors line-clamp-2 leading-tight text-right">
+                                    {nextArticle.title}
+                                </span>
+                                <div className="absolute top-0 right-0 w-1.5 h-full bg-gold/10 group-hover:bg-saffron transition-colors"></div>
+                            </Link>
+                        )}
+                    </div>
+
+                    <div className="mt-16 pt-12 border-t border-gold/5 flex flex-col items-center gap-8">
+                        <Link href="/" className="inline-flex items-center gap-3 px-10 py-4 bg-spiritual-blue text-white rounded-2xl font-bold text-xs uppercase tracking-[0.2em] transition-all hover:bg-slate-800 shadow-xl shadow-blue-900/10 hover:-translate-y-1">
+                            <span className="material-symbols-outlined text-base">apps</span> Go back to Article Gallery
+                        </Link>
+
+                        <Link href="/" className="flex items-center gap-3 text-slate-400 font-bold text-[10px] uppercase tracking-[0.3em] transition-all hover:text-saffron">
+                            <span className="material-symbols-outlined text-sm">home</span> Return to Home Dashboard
+                        </Link>
                     </div>
                 </div>
             </main>
