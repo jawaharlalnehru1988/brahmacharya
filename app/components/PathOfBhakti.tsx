@@ -1,6 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import ReadIndicator from './ReadIndicator';
+import { translations, Language } from '../lib/translations';
 
 interface Article {
     id: number;
@@ -44,7 +45,7 @@ const CATEGORY_METADATA: Record<string, { icon: string; colorScheme: string }> =
     }
 };
 
-const TrapCard = ({ category }: { category: TrapCategory }) => (
+const TrapCard = ({ category, lang, btnLabel }: { category: TrapCategory, lang: string, btnLabel: string }) => (
     <div className={`flex flex-col rounded-3xl border-2 p-8 transition-all hover:shadow-xl select-text ${category.colorScheme}`}>
         <div className="flex items-center gap-4 mb-6 select-text">
             <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white shadow-sm border border-current opacity-80">
@@ -62,7 +63,7 @@ const TrapCard = ({ category }: { category: TrapCategory }) => (
                 <li key={index} className="flex items-center gap-4 text-xl font-semibold text-slate-800 hover:text-black transition-colors lg:py-1 select-text">
                     <ReadIndicator slug={item.slug} />
                     <Link
-                        href={`/articles/${item.slug}`}
+                        href={`/articles/${item.slug}?lang=${lang}`}
                         className="leading-snug select-text cursor-pointer hover:underline decoration-2 underline-offset-4 decoration-current/30"
                     >
                         {item.title}
@@ -73,21 +74,23 @@ const TrapCard = ({ category }: { category: TrapCategory }) => (
 
         <div className="mt-10 pt-8 border-t border-current border-opacity-5">
             <Link
-                href={`/tracker?category=${encodeURIComponent(category.title)}`}
+                href={`/tracker?category=${encodeURIComponent(category.title)}&lang=${lang}`}
                 className="inline-flex items-center gap-2 px-8 py-3 rounded-xl border border-current bg-white/50 hover:bg-white transition-all font-bold text-xs uppercase tracking-widest opacity-80"
             >
                 <span className="material-symbols-outlined text-base">analytics</span>
-                Scan Vulnerabilities
+                {btnLabel}
             </Link>
         </div>
     </div>
 );
 
-const PathOfBhakti = async () => {
+const PathOfBhakti = async ({ lang = 'en' }: { lang?: string }) => {
+    const t = translations[lang as Language] || translations.en;
     let trapCategories: TrapCategory[] = [];
 
     try {
-        const response = await fetch('https://api.askharekrishna.com/api/v1/brahmhacarya/', {
+        const url = `https://api.askharekrishna.com/api/v1/brahmhacarya/?language=${lang}`;
+        const response = await fetch(url, {
             next: { revalidate: 3600 } // Revalidate every hour
         });
         const articles: Article[] = await response.json();
@@ -145,33 +148,33 @@ const PathOfBhakti = async () => {
                 <div className="mb-20 text-center max-w-4xl mx-auto">
                     <h3 className="text-sm font-bold uppercase tracking-[0.4em] text-red-600 mb-4 flex items-center justify-center gap-2">
                         <span className="material-symbols-outlined text-base">warning</span>
-                        Modern-Day Māyā Trap Landscape
+                        {t.path_badge}
                     </h3>
-                    <h2 className="text-4xl font-bold tracking-tight text-spiritual-blue sm:text-5xl font-serif-title mb-6">Threat Model for Sādhaka Life</h2>
+                    <h2 className="text-4xl font-bold tracking-tight text-spiritual-blue sm:text-5xl font-serif-title mb-6">{t.path_title}</h2>
                     <div className="h-1.5 w-40 bg-red-600/20 mx-auto rounded-full overflow-hidden">
                         <div className="h-full w-1/3 bg-red-600 animate-[pulse_2s_infinite]"></div>
                     </div>
                     <p className="mt-8 text-lg text-slate-600 leading-relaxed max-w-3xl mx-auto font-medium">
-                        Recognize the exact attack vectors through which sense agitation, distraction, and relapse cycles are being engineered in contemporary society. Knowing the enemy is 50% of the victory.
+                        {t.path_desc}
                     </p>
                 </div>
 
                 <div className="flex flex-col gap-10">
                     {trapCategories.map((category, index) => (
-                        <TrapCard key={index} category={category} />
+                        <TrapCard key={index} category={category} lang={lang} btnLabel={t.btn_scan_vulnerabilities} />
                     ))}
                 </div>
 
                 <div className="mt-20 rounded-[2.5rem] bg-indigo-950 p-12 text-center border-4 border-indigo-900/50 shadow-2xl relative overflow-hidden">
                     <div className="relative z-10">
-                        <h4 className="text-2xl font-bold text-white font-serif-title mb-4 uppercase tracking-widest">Agnostic Awareness</h4>
+                        <h4 className="text-2xl font-bold text-white font-serif-title mb-4 uppercase tracking-widest">{t.agnostic_title}</h4>
                         <p className="text-indigo-200 italic max-w-2xl mx-auto mb-10 leading-relaxed">
-                            These traps are designed to capture your attention and drain your spiritual vitality. Identify them in your daily life to deactivate their power over your consciousness.
+                            {t.agnostic_desc}
                         </p>
                         <div className="flex flex-wrap justify-center gap-6 text-indigo-300 text-xs font-bold uppercase tracking-widest">
-                            <span className="flex items-center gap-2 px-4 py-2 bg-indigo-900/50 rounded-full"><span className="material-symbols-outlined text-sm">visibility</span> Detect</span>
-                            <span className="flex items-center gap-2 px-4 py-2 bg-indigo-900/50 rounded-full"><span className="material-symbols-outlined text-sm">do_not_disturb_on</span> Detach</span>
-                            <span className="flex items-center gap-2 px-4 py-2 bg-indigo-900/50 rounded-full"><span className="material-symbols-outlined text-sm">bolt</span> Deactivate</span>
+                            <span className="flex items-center gap-2 px-4 py-2 bg-indigo-900/50 rounded-full"><span className="material-symbols-outlined text-sm">visibility</span> {t.label_detect}</span>
+                            <span className="flex items-center gap-2 px-4 py-2 bg-indigo-900/50 rounded-full"><span className="material-symbols-outlined text-sm">do_not_disturb_on</span> {t.label_detach}</span>
+                            <span className="flex items-center gap-2 px-4 py-2 bg-indigo-900/50 rounded-full"><span className="material-symbols-outlined text-sm">bolt</span> {t.label_deactivate}</span>
                         </div>
                     </div>
                     {/* Background decoration */}

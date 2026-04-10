@@ -18,9 +18,10 @@ interface Article {
     order: number;
 }
 
-async function getArticles() {
+async function getArticles(lang: string = 'en') {
     try {
-        const response = await axios.get('https://api.askharekrishna.com/api/v1/brahmhacarya/', {
+        const url = `https://api.askharekrishna.com/api/v1/brahmhacarya/?language=${lang}`;
+        const response = await axios.get(url, {
             timeout: 10000
         });
         // Assuming the API returns an array or a results object
@@ -31,8 +32,9 @@ async function getArticles() {
     }
 }
 
-export default async function ArticlesListPage() {
-    const articles: Article[] = await getArticles();
+export default async function ArticlesListPage({ searchParams }: { searchParams: Promise<{ lang?: string }> }) {
+    const { lang = 'en' } = await searchParams;
+    const articles: Article[] = await getArticles(lang);
 
     // Group articles by category
     const groupedArticles = articles.reduce((acc, article) => {
@@ -80,7 +82,7 @@ export default async function ArticlesListPage() {
                                             .map((article) => (
                                                 <Link
                                                     key={article.slug}
-                                                    href={`/articles/${article.slug}`}
+                                                    href={`/articles/${article.slug}?lang=${lang}`}
                                                     className="group flex flex-col bg-white rounded-[2.5rem] overflow-hidden border border-gold/10 transition-all hover:shadow-2xl hover:scale-[1.02]"
                                                 >
                                                     {/* Card Image */}

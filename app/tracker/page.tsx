@@ -44,10 +44,13 @@ function TrackerContent() {
     const [savedScores, setSavedScores] = useState<Record<string, number>>({});
     const [loading, setLoading] = useState(true);
 
+    const currentLang = searchParams.get('lang') || 'en';
+
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const res = await fetch('https://api.askharekrishna.com/api/v1/brahmhacarya/');
+                const url = `https://api.askharekrishna.com/api/v1/brahmhacarya/?language=${currentLang}`;
+                const res = await fetch(url);
                 const articles: Article[] = await res.json();
                 setAllArticles(articles);
 
@@ -68,7 +71,7 @@ function TrackerContent() {
             }
         };
         fetchData();
-    }, [urlCategory]);
+    }, [urlCategory, currentLang]);
 
     const activeArticles = allArticles.filter(a => a.category === activeZone);
 

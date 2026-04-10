@@ -15,9 +15,10 @@ interface Article {
     order: number;
 }
 
-async function getArticles() {
+async function getArticles(lang: string = 'en') {
     try {
-        const response = await axios.get('https://api.askharekrishna.com/api/v1/brahmhacarya/');
+        const url = `https://api.askharekrishna.com/api/v1/brahmhacarya/?language=${lang}`;
+        const response = await axios.get(url);
         return Array.isArray(response.data) ? response.data : response.data.results || [];
     } catch (error) {
         console.error("Error fetching articles list:", error);
@@ -46,11 +47,17 @@ async function getArticle(slug: string) {
     }
 }
 
-export default async function ArticlePage({ params }: { params: { slug: string } }) {
+import { translations, Language } from '../../lib/translations';
+
+export default async function ArticlePage({ params, searchParams }: { params: Promise<{ slug: string }>, searchParams: Promise<{ lang?: string }> }) {
     const { slug } = await params;
+    const { lang = 'en' } = await searchParams;
+    const currentLang = (lang || 'en') as Language;
+    const t = translations[currentLang] || translations.en;
+
     const [article, allArticles] = await Promise.all([
         getArticle(slug),
-        getArticles()
+        getArticles(currentLang)
     ]);
 
     if (!article) {
@@ -79,9 +86,9 @@ export default async function ArticlePage({ params }: { params: { slug: string }
                         <div className="flex justify-center items-center gap-6 text-xs font-bold uppercase tracking-widest text-slate-400">
                             <span className="flex items-center gap-2">
                                 <span className="material-symbols-outlined text-sm">calendar_month</span>
-                                {article.published_at ? article.published_at.substring(0, 10) : (article.created_at ? article.created_at.substring(0, 10) : 'Date TBD')}
+                                {article.published_at ? article.published_at.substring(0, 10) : (article.created_at ? article.created_at.substring(0, 10) : t.article_date_tbd)}
                             </span>
-                            <span className="flex items-center gap-2 text-gold"><span className="material-symbols-outlined text-sm">stars</span> Priority: {article.order}</span>
+                            <span className="flex items-center gap-2 text-gold"><span className="material-symbols-outlined text-sm">stars</span> {t.article_priority}: {article.order}</span>
                         </div>
                     </div>
 
@@ -95,10 +102,10 @@ export default async function ArticlePage({ params }: { params: { slug: string }
                     {/* Audio Support */}
                     {article.audioUrl && (
                         <div className="mt-16 p-8 rounded-3xl bg-saffron/5 border-2 border-dashed border-saffron/20 text-center">
-                            <h4 className="text-sm font-bold uppercase tracking-[0.2em] text-saffron mb-6">Accompanying Audio Lecture</h4>
+                            <h4 className="text-sm font-bold uppercase tracking-[0.2em] text-saffron mb-6">{t.article_audio_label}</h4>
                             <audio controls className="w-full max-w-xl mx-auto">
                                 <source src={article.audioUrl} type="audio/mpeg" />
-                                Your browser does not support the audio element.
+                                {t.article_audio_fallback}
                             </audio>
                         </div>
                     )}
@@ -120,9 +127,9 @@ export default async function ArticlePage({ params }: { params: { slug: string }
                     {/* Navigation Suggestions */}
                     <div className="mt-24 grid grid-cols-1 md:grid-cols-2 gap-8 border-t border-gold/10 pt-16">
                         {prevArticle ? (
-                            <Link href={`/articles/${prevArticle.slug}`} className="group flex flex-col p-8 rounded-[2rem] border border-gold/5 bg-white shadow-xl hover:shadow-2xl transition-all text-left relative overflow-hidden">
+                            <Link href={`/articles/${prevArticle.slug}?lang=${currentLang}`} className="group flex flex-col p-8 rounded-[2rem] border border-gold/5 bg-white shadow-xl hover:shadow-2xl transition-all text-left relative overflow-hidden">
                                 <span className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-slate-400 mb-3 flex items-center gap-2 group-hover:text-saffron transition-colors">
-                                    <span className="material-symbols-outlined text-sm">west</span> Previous Wisdom
+                                    <span className="material-symbols-outlined text-sm">west</span> {t.article_nav_prev}
                                 </span>
                                 <span className="text-xl font-bold font-serif-title text-spiritual-blue group-hover:text-saffron transition-colors line-clamp-2 leading-tight">
                                     {prevArticle.title}
@@ -134,9 +141,9 @@ export default async function ArticlePage({ params }: { params: { slug: string }
                         )}
 
                         {nextArticle && (
-                            <Link href={`/articles/${nextArticle.slug}`} className="group flex flex-col p-8 rounded-[2rem] border border-gold/5 bg-white shadow-xl hover:shadow-2xl transition-all text-right relative overflow-hidden">
+                            <Link href={`/articles/${nextArticle.slug}?lang=${currentLang}`} className="group flex flex-col p-8 rounded-[2rem] border border-gold/5 bg-white shadow-xl hover:shadow-2xl transition-all text-right relative overflow-hidden">
                                 <span className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-slate-400 mb-3 flex items-center justify-end gap-2 group-hover:text-saffron transition-colors">
-                                    Next Wisdom <span className="material-symbols-outlined text-sm">east</span>
+                                    {t.article_nav_next} <span className="material-symbols-outlined text-sm">east</span>
                                 </span>
                                 <span className="text-xl font-bold font-serif-title text-spiritual-blue group-hover:text-saffron transition-colors line-clamp-2 leading-tight text-right">
                                     {nextArticle.title}
@@ -147,17 +154,17 @@ export default async function ArticlePage({ params }: { params: { slug: string }
                     </div>
 
                     <div className="mt-16 pt-12 border-t border-gold/5 flex flex-col items-center gap-8">
-                        <Link href="/" className="inline-flex items-center gap-3 px-10 py-4 bg-spiritual-blue text-white rounded-2xl font-bold text-xs uppercase tracking-[0.2em] transition-all hover:bg-slate-800 shadow-xl shadow-blue-900/10 hover:-translate-y-1">
-                            <span className="material-symbols-outlined text-base">apps</span> Go back to Article Gallery
+                        <Link href={`/?lang=${currentLang}`} className="inline-flex items-center gap-3 px-10 py-4 bg-spiritual-blue text-white rounded-2xl font-bold text-xs uppercase tracking-[0.2em] transition-all hover:bg-slate-800 shadow-xl shadow-blue-900/10 hover:-translate-y-1">
+                            <span className="material-symbols-outlined text-base">apps</span> {t.article_btn_gallery}
                         </Link>
 
-                        <Link href="/" className="flex items-center gap-3 text-slate-400 font-bold text-[10px] uppercase tracking-[0.3em] transition-all hover:text-saffron">
-                            <span className="material-symbols-outlined text-sm">home</span> Return to Home Dashboard
+                        <Link href={`/?lang=${currentLang}`} className="flex items-center gap-3 text-slate-400 font-bold text-[10px] uppercase tracking-[0.3em] transition-all hover:text-saffron">
+                            <span className="material-symbols-outlined text-sm">home</span> {t.article_btn_home}
                         </Link>
                     </div>
                 </div>
             </main>
-            <Footer />
+            <Footer lang={currentLang} />
         </div>
     );
 }

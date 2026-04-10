@@ -9,16 +9,18 @@ import Footer from './components/Footer';
 import ScripturalSupport from './components/ScripturalSupport';
 import UniversalBrahmacharya from './components/UniversalBrahmacharya';
 
-export default function Home() {
+export default async function Home({ searchParams }: { searchParams: Promise<{ lang?: string }> }) {
+  const { lang = 'en' } = await searchParams;
+
   return (
     <div className="relative flex min-h-screen w-full flex-col">
       <Header />
       <main className="flex-1">
-        <Hero />
-        <UniversalBrahmacharya />
-        <ScripturalSupport />
-        <Pillars />
-        <PathOfBhakti />
+        <Hero lang={lang} />
+        <UniversalBrahmacharya lang={lang} />
+        <ScripturalSupport lang={lang} />
+        <Pillars lang={lang} />
+        <PathOfBhakti lang={lang} />
         <CTA />
       </main>
       <Footer />
