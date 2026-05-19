@@ -15,6 +15,7 @@ export const translations = {
         hero_badge: "Eternal Wisdom of Bhakti",
         hero_title_prefix: "Experience the ",
         hero_title_highlight: "Higher Taste",
+        hero_title_suffix: "",
         hero_quote: "\"By experiencing a higher spiritual taste, one can easily give up the lower tastes of the material world.\"",
         hero_attribution: "Inspired By His Divine Grace A.C. Bhaktivedanta Swami Srila Prabhupada.",
         hero_dedication: "Dedicated to all sincere followers of him.",

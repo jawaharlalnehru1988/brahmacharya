@@ -4,7 +4,7 @@ import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { translations, Language } from '../lib/translations';
 
-const Header = () => {
+const HeaderContent = () => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const searchParams = useSearchParams();
     const router = useRouter();
@@ -167,6 +167,14 @@ const Header = () => {
                 </div>
             </aside>
         </>
+    );
+};
+
+const Header = () => {
+    return (
+        <React.Suspense fallback={<div className="h-20 bg-deep-cream/90 animate-pulse" />}>
+            <HeaderContent />
+        </React.Suspense>
     );
 };
 

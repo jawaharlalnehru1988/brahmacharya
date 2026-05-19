@@ -54,22 +54,16 @@ export interface Article {
 }
 
 export const mockArticles: Record<string, Article> = {
-    'meaning-of-brahmacharya-in-krishna-consciousness': {
-        title: 'Meaning of Brahmacharya in Krishna Consciousness',
-        slug: 'meaning-of-brahmacharya-in-krishna-consciousness',
-        category: 'FOUNDATIONAL RESOLUTION',
-        excerpt: 'Understanding the foundational definition of purity and its role in spiritual advancement.',
-        published_at: '2024-02-28',
-        author: 'A.C. Bhaktivedanta Swami Prabhupada (Compiled)',
-        content: \`
-# Meaning of Brahmacharya in Krishna Consciousness
-...
-\`
-    },
 `;
 
 // Append all articles
+const seenSlugs = new Set();
 finalArticlesList.forEach(art => {
+    if (seenSlugs.has(art.slug)) {
+        console.warn(`Warning: Duplicate slug found and skipped in TS output: ${art.slug}`);
+        return;
+    }
+    seenSlugs.add(art.slug);
     mockDbContent += `    '${art.slug}': {
         title: '${art.title.replace(/'/g, "\\'")}',
         slug: '${art.slug}',
