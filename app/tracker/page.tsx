@@ -3,6 +3,7 @@ import React, { useState, useEffect, useCallback, Suspense, useMemo } from 'reac
 import { useSearchParams } from 'next/navigation';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import { getEnglishCategory, getLocalizedCategory, Language } from '../lib/translations';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -142,7 +143,7 @@ function CategoryCard({ cat, stats, onChallenge }: {
                 </div>
                 <div className="flex-1 min-w-0">
                     <h3 className="font-bold text-spiritual-blue text-sm leading-tight font-serif-title line-clamp-2">
-                        {cat.replace(' - CHARACTER CASE STUDIES', '')}
+                        {getLocalizedCategory(cat, (new URLSearchParams(window.location.search)).get('lang') as Language || 'en').replace(' - CHARACTER CASE STUDIES', '').replace(' - பண்புநலன் வரலாற்று ஆய்வுகள்', '').replace(' - பாத்திர ஆய்வு', '')}
                     </h3>
                     {isComplete && (
                         <span className="inline-flex items-center gap-1 mt-1.5 text-[9px] font-black uppercase tracking-widest text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
@@ -339,7 +340,7 @@ function ChallengeModal({ category, queue, onClose }: {
                         </div>
                         <h3 className="text-2xl font-bold font-serif-title text-spiritual-blue mb-1">Challenge Complete! 🎉</h3>
                         <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-1">
-                            {category.replace(' - CHARACTER CASE STUDIES', '')}
+                            {getLocalizedCategory(category, (new URLSearchParams(window.location.search)).get('lang') as Language || 'en').replace(' - CHARACTER CASE STUDIES', '').replace(' - பண்புநலன் வரலாற்று ஆய்வுகள்', '').replace(' - பாத்திர ஆய்வு', '')}
                         </p>
                         <p className="text-lg font-black mb-6" style={{ color: meta.accent }}>
                             {finalCorrect} / {finalTotal} correct · {finalPct}%
@@ -540,11 +541,12 @@ function TrackerContent() {
 
     const byCategory = useMemo(() =>
         allArticles.reduce((acc, a) => {
-            if (!acc[a.category]) acc[a.category] = [];
-            acc[a.category].push(a);
+            const catEn = getEnglishCategory(a.category, currentLang as Language).toUpperCase();
+            if (!acc[catEn]) acc[catEn] = [];
+            acc[catEn].push(a);
             return acc;
         }, {} as Record<string, Article[]>),
-        [allArticles]
+        [allArticles, currentLang]
     );
 
     const getCategoryStats = useCallback((cat: string): CatStats => {

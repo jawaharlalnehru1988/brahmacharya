@@ -1,6 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
-import { translations, Language } from '../lib/translations';
+import { translations, Language, getEnglishCategory, getLocalizedCategory } from '../lib/translations';
 
 interface Article {
     id: number;
@@ -56,7 +56,8 @@ const UniversalBrahmacharya = async ({ lang = 'en' }: { lang?: string }) => {
 
         const catMap: Record<string, number> = {};
         articles.forEach(a => {
-            catMap[a.category] = (catMap[a.category] || 0) + 1;
+            const catEn = getEnglishCategory(a.category, lang as Language).toUpperCase();
+            catMap[catEn] = (catMap[catEn] || 0) + 1;
         });
 
         stats.totalCategories = Object.keys(catMap).length;
@@ -67,7 +68,7 @@ const UniversalBrahmacharya = async ({ lang = 'en' }: { lang?: string }) => {
             color: CATEGORY_COLORS[name.toUpperCase()] || "text-slate-500"
         })).sort((a, b) => b.count - a.count);
 
-        stats.latestSeries = articles[articles.length - 1]?.category || "Modern Cases";
+        stats.latestSeries = getLocalizedCategory(articles[articles.length - 1]?.category || "Modern Cases", lang as Language);
 
     } catch (e) {
         console.error("Dashboard Fetch Error:", e);
@@ -111,7 +112,7 @@ const UniversalBrahmacharya = async ({ lang = 'en' }: { lang?: string }) => {
                             <span className="text-xs font-bold uppercase tracking-widest text-slate-400">{t.stat_study_hours}</span>
                         </div>
                         <div className="bg-white border border-slate-100 p-8 rounded-[2.5rem] shadow-xl shadow-slate-200/50 flex flex-col items-center text-center group hover:-translate-y-2 transition-transform col-span-2 lg:col-span-1">
-                            <span className="text-xl font-black text-indigo-500 mb-2 uppercase leading-tight line-clamp-1 truncate max-w-[150px]">{stats.latestSeries.replace(' - CHARACTER CASE STUDIES', '')}</span>
+                            <span className="text-xl font-black text-indigo-500 mb-2 uppercase leading-tight line-clamp-1 truncate max-w-[150px]">{stats.latestSeries.replace(' - CHARACTER CASE STUDIES', '').replace(' - பண்புநலன் வரலாற்று ஆய்வுகள்', '').replace(' - பாத்திர ஆய்வு', '')}</span>
                             <span className="text-xs font-bold uppercase tracking-widest text-slate-400">{t.stat_latest_series}</span>
                         </div>
                     </div>

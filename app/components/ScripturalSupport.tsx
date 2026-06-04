@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import ReadIndicator from './ReadIndicator';
-import { translations, Language } from '../lib/translations';
+import { translations, Language, getEnglishCategory, getLocalizedCategory } from '../lib/translations';
 
 interface Article {
     id: number;
@@ -55,7 +55,7 @@ const SupportCard = ({ category, lang, btnLabel }: { category: SupportCategory, 
                 <span className="material-symbols-outlined text-4xl">{category.icon}</span>
             </div>
             <div>
-                <h4 className="text-xl font-bold font-serif-title tracking-tight leading-tight mb-1">{category.title.replace(' - CHARACTER CASE STUDIES', '')}</h4>
+                <h4 className="text-xl font-bold font-serif-title tracking-tight leading-tight mb-1">{getLocalizedCategory(category.title, lang as Language).replace(' - CHARACTER CASE STUDIES', '').replace(' - பண்புநலன் வரலாற்று ஆய்வுகள்', '').replace(' - பாத்திர ஆய்வு', '')}</h4>
                 <p className="text-sm font-medium opacity-80 italic">{category.subtitle}</p>
             </div>
         </div>
@@ -104,13 +104,13 @@ const ScripturalSupport = async ({ lang = 'en' }: { lang?: string }) => {
         const groups: Record<string, SupportItem[]> = {};
 
         articles.forEach(article => {
-            const category = article.category.toUpperCase();
-            if (metadata[category]) {
-                if (!groups[category]) {
-                    groups[category] = [];
+            const categoryEn = getEnglishCategory(article.category, lang as Language).toUpperCase();
+            if (metadata[categoryEn]) {
+                if (!groups[categoryEn]) {
+                    groups[categoryEn] = [];
                 }
                 const cleanTitle = article.title.replace(/^\d+\.\s*/, '');
-                groups[category].push({
+                groups[categoryEn].push({
                     title: cleanTitle,
                     slug: article.slug
                 });
