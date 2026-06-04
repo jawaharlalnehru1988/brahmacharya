@@ -2,6 +2,8 @@ import enData from '../locales/en.json';
 import taData from '../locales/ta.json';
 import hiData from '../locales/hi.json';
 
+// Force reload 1
+
 export const LANGUAGE_NAMES: Record<string, string> = {
     "en": "English",
     "ta": "Tamil",
@@ -48,6 +50,27 @@ export const CATEGORY_TRANSLATIONS: Record<string, Record<string, string>> = {
         "VEDIC / GĪTĀ / UPANIṢADIC INSTRUCTIONS": "வேத / கீதை / உபநிஷத் அறிவுரைகள்",
         "PURĀṆIC & ITIHĀSA STORIES - CHARACTER CASE STUDIES": "புராண மற்றும் இதிகாசக் கதைகள் - பாத்திர ஆய்வு",
         "MODERN REAL-LIFE CASE THEMES": "நவீன நிஜ வாழ்க்கை நிகழ்வுகள்"
+    },
+    hi: {
+        "DIGITAL VISUAL STIMULATION TRAPS": "डिजिटल दृश्य उत्तेजना जाल",
+        "DAILY REGULATION": "दैनिक विनियमन",
+        "SENSE REGULATION": "इंद्रिय संयम",
+        "SCRIPTURAL ABSORPTION": "शास्त्रीय अवशोषण",
+        "FALL-RECOVERY PROTOCOL": "पतन-पुनर्प्राप्ति प्रोटोकॉल",
+        "STABILITY & HIGHER TASTE": "स्थिरता और उच्चतर स्वाद",
+        "NIṢṬHĀ MAINTENANCE": "निष्ठा रखरखाव",
+        "PSYCHOLOGICAL & NEUROCHEMICAL TRAPS": "मनोवैज्ञानिक और न्यूरोकेमिकल जाल",
+        "CONSUMERISM & LIFESTYLE TRAPS": "उपभोक्तावाद और जीवन शैली जाल",
+        "WORKPLACE & SOCIAL ENVIRONMENT TRAPS": "कार्यस्थल और सामाजिक परिवेश जाल",
+        "MEDIA & ENTERTAINMENT TRAPS": "मीडिया और मनोरंजन जाल",
+        "ASSOCIATION ARCHITECTURE": "सत्संग वास्तुकला",
+        "CHANTING INFRASTRUCTURE": "जप बुनियादी ढांचा",
+        "MIND MANAGEMENT": "मन प्रबंधन",
+        "FOUNDATIONAL RESOLUTION": "मूलभूत संकल्प",
+        "PRABHUPĀDA INSTRUCTIONAL QUOTE THEMES": "प्रभुपाद उपदेशात्मक उद्धरण",
+        "VEDIC / GĪTĀ / UPANIṢADIC INSTRUCTIONS": "वैदिक / गीता / उपनिषदिक निर्देश",
+        "PURĀṆIC & ITIHĀSA STORIES - CHARACTER CASE STUDIES": "पौराणिक और इतिहास कथाएँ - पात्राध्ययन",
+        "MODERN REAL-LIFE CASE THEMES": "आधुनिक वास्तविक जीवन के मामले"
     }
 };
 

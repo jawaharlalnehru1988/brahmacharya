@@ -3,7 +3,10 @@ import React, { useState, useEffect, useCallback, Suspense, useMemo } from 'reac
 import { useSearchParams } from 'next/navigation';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
-import { getEnglishCategory, getLocalizedCategory, Language } from '../lib/translations';
+import Link from 'next/link';
+import axios from 'axios';
+import RegistrationModal, { UserData } from '../components/RegistrationModal';
+import { getEnglishCategory, getLocalizedCategory, Language, translations } from '../lib/translations';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -121,8 +124,9 @@ interface CatStats {
     completedArticles: number; answeredQuestions: number; correctAnswers: number; pct: number;
 }
 
-function CategoryCard({ cat, stats, onChallenge }: {
+function CategoryCard({ cat, stats, onChallenge, lang, t }: {
     cat: string; stats: CatStats; onChallenge: (retake: boolean) => void;
+    lang: Language; t: any;
 }) {
     const meta = CATEGORY_MAP[cat] ?? { icon: 'quiz', accent: '#94a3b8', type: 'wisdom' };
     const { totalArticles, totalQuestions, completedArticles, answeredQuestions, correctAnswers, pct } = stats;
@@ -143,7 +147,7 @@ function CategoryCard({ cat, stats, onChallenge }: {
                 </div>
                 <div className="flex-1 min-w-0">
                     <h3 className="font-bold text-spiritual-blue text-sm leading-tight font-serif-title line-clamp-2">
-                        {getLocalizedCategory(cat, (new URLSearchParams(window.location.search)).get('lang') as Language || 'en').replace(' - CHARACTER CASE STUDIES', '').replace(' - பண்புநலன் வரலாற்று ஆய்வுகள்', '').replace(' - பாத்திர ஆய்வு', '')}
+                        {getLocalizedCategory(cat, lang).replace(' - CHARACTER CASE STUDIES', '').replace(' - பண்புநலன் வரலாற்று ஆய்வுகள்', '').replace(' - पात्राध्ययन', '').replace(' - पात्राध्ययन', '')}
                     </h3>
                     {isComplete && (
                         <span className="inline-flex items-center gap-1 mt-1.5 text-[9px] font-black uppercase tracking-widest text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
@@ -156,12 +160,12 @@ function CategoryCard({ cat, stats, onChallenge }: {
             {/* 3-stat row */}
             <div className="grid grid-cols-3 gap-2 mb-5">
                 {[
-                    { val: totalArticles, label: 'Articles' },
-                    { val: totalQuestions, label: 'Questions' },
-                    { val: noQuestions ? '—' : `${pct}%`, label: 'Score' },
+                    { val: totalArticles, label: t.tracker_articles || 'Articles' },
+                    { val: totalQuestions, label: t.tracker_questions || 'Questions' },
+                    { val: noQuestions ? '—' : `${pct}%`, label: t.tracker_score || 'Score' },
                 ].map(({ val, label }) => (
                     <div key={label} className="text-center p-2.5 rounded-xl" style={{ backgroundColor: meta.accent + '0E' }}>
-                        <div className="text-base font-black" style={{ color: hasStarted || label === 'Articles' || label === 'Questions' ? meta.accent : '#94a3b8' }}>{val}</div>
+                        <div className="text-base font-black" style={{ color: hasStarted || label === (t.tracker_articles || 'Articles') || label === (t.tracker_questions || 'Questions') ? meta.accent : '#94a3b8' }}>{val}</div>
                         <div className="text-[9px] font-bold uppercase tracking-widest text-slate-400">{label}</div>
                     </div>
                 ))}
@@ -171,8 +175,8 @@ function CategoryCard({ cat, stats, onChallenge }: {
             {hasStarted && (
                 <div className="mb-5">
                     <div className="flex justify-between text-[9px] font-bold uppercase tracking-widest text-slate-400 mb-1.5">
-                        <span>{answeredQuestions}/{totalQuestions} answered</span>
-                        <span className="text-emerald-600">{correctAnswers} correct</span>
+                        <span>{answeredQuestions}/{totalQuestions} {t.tracker_answered_lowercase || 'answered'}</span>
+                        <span className="text-emerald-600">{correctAnswers} {t.tracker_correct_lowercase || 'correct'}</span>
                     </div>
                     <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
                         <div className="h-full rounded-full transition-all duration-700"
@@ -185,7 +189,7 @@ function CategoryCard({ cat, stats, onChallenge }: {
             <div className="mt-auto space-y-2">
                 {noQuestions ? (
                     <div className="w-full py-3.5 rounded-2xl text-center text-[10px] font-bold uppercase tracking-widest text-slate-300 bg-slate-50">
-                        No Questions Yet
+                        {t.tracker_no_questions_yet || 'No Questions Yet'}
                     </div>
                 ) : isComplete ? (
                     <>
@@ -196,20 +200,20 @@ function CategoryCard({ cat, stats, onChallenge }: {
                         </div>
                         <button onClick={() => onChallenge(true)}
                             className="w-full py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest border-2 border-slate-100 text-slate-400 hover:border-saffron hover:text-saffron transition-all">
-                            ↺ Retake Challenge
+                            ↺ {t.tracker_retake_challenge || 'Retake Challenge'}
                         </button>
                     </>
                 ) : hasStarted ? (
                     <button onClick={() => onChallenge(false)}
                         className="w-full py-4 rounded-2xl text-sm font-black uppercase tracking-widest text-white shadow-lg transition-all hover:brightness-110 hover:-translate-y-0.5 active:scale-95"
                         style={{ backgroundColor: meta.accent, boxShadow: `0 8px 20px ${meta.accent}40` }}>
-                        Continue · {totalArticles - completedArticles} Articles Left
+                        {t.tracker_continue || 'Continue'} · {totalArticles - completedArticles} {t.tracker_articles_left || 'Articles Left'}
                     </button>
                 ) : (
                     <button onClick={() => onChallenge(false)}
                         className="w-full py-4 rounded-2xl text-sm font-black uppercase tracking-widest text-white shadow-lg transition-all hover:brightness-110 hover:-translate-y-0.5 active:scale-95"
                         style={{ backgroundColor: meta.accent, boxShadow: `0 8px 20px ${meta.accent}40` }}>
-                        Start Challenge
+                        {t.tracker_start_challenge || 'Start Challenge'}
                     </button>
                 )}
             </div>
@@ -219,16 +223,21 @@ function CategoryCard({ cat, stats, onChallenge }: {
 
 // ─── Challenge Modal ──────────────────────────────────────────────────────────
 
-function ChallengeModal({ category, queue, onClose }: {
+function ChallengeModal({ category, queue, onClose, lang, t }: {
     category: string; queue: QuizEntry[]; onClose: () => void;
+    lang: Language; t: any;
 }) {
-    const meta = CATEGORY_MAP[category] ?? { icon: 'quiz', accent: '#FF9933', type: 'wisdom' };
     const [index, setIndex] = useState(0);
     const [selectedId, setSelectedId] = useState<number | null>(null);
     const [answerState, setAnswerState] = useState<'unanswered' | 'correct' | 'incorrect'>('unanswered');
     const [animating, setAnimating] = useState(false);
     const [answers, setAnswers] = useState<SessionAnswer[]>([]);
     const [phase, setPhase] = useState<'quiz' | 'result'>('quiz');
+    const [showRegistration, setShowRegistration] = useState(false);
+    const [finalScoreContext, setFinalScoreContext] = useState<{ score: number; total: number; articleTitle: string } | undefined>();
+
+    const current = queue[index];
+    const meta = CATEGORY_MAP[category] ?? { icon: 'quiz', accent: '#94a3b8', type: 'wisdom' };
 
     useEffect(() => {
         document.body.style.overflow = 'hidden';
@@ -245,27 +254,37 @@ function ChallengeModal({ category, queue, onClose }: {
                 <div className="absolute inset-0 bg-spiritual-blue/80 backdrop-blur-md" onClick={onClose} />
                 <div className="relative z-10 bg-white rounded-[2.5rem] p-12 text-center max-w-md shadow-2xl animate-in zoom-in-95 fade-in duration-400">
                     <span className="material-symbols-outlined text-6xl text-gold mb-4 block">emoji_events</span>
-                    <h3 className="text-2xl font-bold font-serif-title text-spiritual-blue mb-3">All Caught Up!</h3>
-                    <p className="text-slate-500 text-sm mb-8 leading-relaxed">
-                        You've completed all articles in this category. Use <strong>"Retake Challenge"</strong> on the card to test yourself again.
-                    </p>
+                    <h3 className="text-2xl font-bold font-serif-title text-spiritual-blue mb-3">{t.tracker_all_caught_up || 'All Caught Up!'}</h3>
+                    <p className="text-slate-500 text-sm mb-8 leading-relaxed" dangerouslySetInnerHTML={{ __html: t.tracker_caught_up_desc || 'You\'ve completed all articles in this category. Use <strong>"Retake Challenge"</strong> on the card to test yourself again.' }} />
                     <button onClick={onClose}
                         className="px-8 py-4 rounded-2xl text-white font-bold text-xs uppercase tracking-widest shadow-lg"
                         style={{ backgroundColor: meta.accent }}>
-                        Back to Tracker
+                        {t.tracker_back_to_tracker || 'Back to Tracker'}
                     </button>
                 </div>
             </div>
         );
     }
-
-    const current = queue[index];
-
     const handleSelect = (optionId: number) => {
         if (answerState !== 'unanswered' || animating) return;
         const opt = current.question.options.find(o => o.id === optionId)!;
         setSelectedId(optionId);
         setAnswerState(opt.is_correct ? 'correct' : 'incorrect');
+    };
+
+    const submitScore = async (userData: UserData, scoreContext: { score: number; total: number; articleTitle: string }) => {
+        try {
+            await axios.post('https://api.askharekrishna.com/api/v1/brahmhacarya/score/', {
+                user_name: userData.full_name,
+                phone_number: userData.phone_number || userData.whatsapp_number || 'N/A',
+                article_title: scoreContext.articleTitle,
+                score: scoreContext.score,
+                total_questions: scoreContext.total,
+            });
+            console.log("Score saved successfully!");
+        } catch (e) {
+            console.error("Failed to save score", e);
+        }
     };
 
     const handleNext = () => {
@@ -284,7 +303,24 @@ function ChallengeModal({ category, queue, onClose }: {
             setAnswers(newAnswers);
             if (isLast) {
                 saveAnswersToStorage(newAnswers);
-                setPhase('result');
+                
+                // Prepare score context for the final result
+                const finalCorrect = newAnswers.filter(a => a.isCorrect).length;
+                const finalTotal = newAnswers.length;
+                const scoreCtx = { score: finalCorrect, total: finalTotal, articleTitle: current.articleTitle };
+                
+                // Submit score if user is registered, else show registration modal
+                const savedUser = localStorage.getItem('brahmacharya_user');
+                if (savedUser) {
+                    try {
+                        const parsedUser = JSON.parse(savedUser) as UserData;
+                        submitScore(parsedUser, scoreCtx);
+                    } catch(e) {}
+                    setPhase('result');
+                } else {
+                    setFinalScoreContext(scoreCtx);
+                    setShowRegistration(true);
+                }
             } else {
                 setIndex(i => i + 1);
                 setSelectedId(null);
@@ -338,41 +374,60 @@ function ChallengeModal({ category, queue, onClose }: {
                         <div className="mb-5">
                             <ScoreRing correct={finalCorrect} total={finalTotal} size={140} />
                         </div>
-                        <h3 className="text-2xl font-bold font-serif-title text-spiritual-blue mb-1">Challenge Complete! 🎉</h3>
+                        <h3 className="text-2xl font-bold font-serif-title text-spiritual-blue mb-1">{t.tracker_challenge_complete || 'Challenge Complete! 🎉'}</h3>
                         <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-1">
-                            {getLocalizedCategory(category, (new URLSearchParams(window.location.search)).get('lang') as Language || 'en').replace(' - CHARACTER CASE STUDIES', '').replace(' - பண்புநலன் வரலாற்று ஆய்வுகள்', '').replace(' - பாத்திர ஆய்வு', '')}
+                            {getLocalizedCategory(category, lang).replace(' - CHARACTER CASE STUDIES', '').replace(' - பண்புநலன் வரலாற்று ஆய்வுகள்', '').replace(' - पात्राध्ययन', '').replace(' - पात्राध्ययन', '')}
                         </p>
                         <p className="text-lg font-black mb-6" style={{ color: meta.accent }}>
-                            {finalCorrect} / {finalTotal} correct · {finalPct}%
+                            {finalCorrect} / {finalTotal} {t.tracker_correct_lowercase || 'correct'} · {finalPct}%
                         </p>
 
                         <div className="grid grid-cols-2 gap-3 mb-5">
                             <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-100">
                                 <div className="text-2xl font-black text-emerald-600">{finalCorrect}</div>
-                                <div className="text-[9px] font-bold uppercase tracking-widest text-emerald-400 mt-0.5">Correct</div>
+                                <div className="text-[9px] font-bold uppercase tracking-widest text-emerald-400 mt-0.5">{t.tracker_correct || 'Correct'}</div>
                             </div>
                             <div className="p-4 rounded-2xl bg-red-50 border border-red-100">
                                 <div className="text-2xl font-black text-red-400">{finalTotal - finalCorrect}</div>
-                                <div className="text-[9px] font-bold uppercase tracking-widest text-red-300 mt-0.5">Incorrect</div>
+                                <div className="text-[9px] font-bold uppercase tracking-widest text-red-300 mt-0.5">{t.tracker_incorrect || 'Incorrect'}</div>
                             </div>
                         </div>
 
                         <div className="flex items-center gap-3 p-4 rounded-2xl bg-yellow-50 border border-yellow-100 mb-5">
                             <span className="material-symbols-outlined text-yellow-500 text-2xl">bolt</span>
                             <div className="text-left">
-                                <div className="font-black text-yellow-700">+{xpEarned.toLocaleString()} XP Earned!</div>
-                                <div className="text-[10px] text-yellow-500 font-bold">Rank: {resultRank.label}</div>
+                                <div className="font-black text-yellow-700">+{xpEarned.toLocaleString()} {t.tracker_earned_xp || 'XP Earned!'}</div>
+                                <div className="text-[10px] text-yellow-500 font-bold">{t.tracker_rank || 'Rank'}: {resultRank.label}</div>
                             </div>
                         </div>
 
                         <button onClick={onClose}
                             className="w-full py-4 rounded-2xl text-white font-bold text-sm uppercase tracking-widest shadow-lg transition-all hover:brightness-110"
                             style={{ backgroundColor: meta.accent, boxShadow: `0 8px 20px ${meta.accent}40` }}>
-                            Back to Tracker
+                            {t.tracker_back_to_tracker || 'Back to Tracker'}
                         </button>
                     </div>
                 </div>
             </div>
+        );
+    }
+
+    if (showRegistration) {
+        return (
+            <RegistrationModal
+                isOpen={true}
+                onClose={() => {
+                    setShowRegistration(false);
+                    setPhase('result');
+                }}
+                onSuccess={(userData) => {
+                    if (finalScoreContext) submitScore(userData, finalScoreContext);
+                    setShowRegistration(false);
+                    setPhase('result');
+                }}
+                lang={lang}
+                scoreContext={finalScoreContext}
+            />
         );
     }
 
@@ -471,18 +526,27 @@ function ChallengeModal({ category, queue, onClose }: {
                             <span className="material-symbols-outlined text-base flex-shrink-0 mt-0.5">
                                 {answerState === 'correct' ? 'check_circle' : 'cancel'}
                             </span>
-                            <div>
+                            <div className="flex-1">
                                 <span className="font-bold">
-                                    {answerState === 'correct' ? '✓ Correct! +10 XP' : '✗ Incorrect.'}
+                                    {answerState === 'correct' ? `✓ ${t.tracker_correct || 'Correct'}! +10 XP` : `✗ ${t.tracker_incorrect || 'Incorrect'}.`}
                                 </span>
                                 {answerState === 'incorrect' && (
                                     <p className="text-xs mt-0.5 opacity-80">
-                                        Correct answer: {current.question.options.find(o => o.is_correct)?.option_text}
+                                        {t.quiz_correct_answer || 'Correct answer:'} {current.question.options.find(o => o.is_correct)?.option_text}
                                     </p>
                                 )}
                             </div>
                         </div>
                     )}
+
+                    {/* Read Article Link (always visible so users can read before answering) */}
+                    <div className="flex justify-end mb-6">
+                        <Link href={`/articles/${current.articleSlug}?lang=${lang}`} target="_blank"
+                            className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-400 hover:text-spiritual-blue transition-colors">
+                            <span className="material-symbols-outlined text-[14px]">menu_book</span>
+                            {t.tracker_read_article || 'Read Related Article'}
+                        </Link>
+                    </div>
 
                     {/* Next / Finish button */}
                     <button id="tracker-next-btn" onClick={handleNext}
@@ -493,12 +557,12 @@ function ChallengeModal({ category, queue, onClose }: {
                                 : 'text-white shadow-lg hover:brightness-110 hover:-translate-y-0.5 active:scale-95'}`}
                         style={answerState !== 'unanswered' ? { backgroundColor: meta.accent, boxShadow: `0 8px 20px ${meta.accent}40` } : {}}>
                         {index >= queue.length - 1
-                            ? <><span className="material-symbols-outlined text-base">done_all</span> Finish Challenge</>
-                            : <><span className="material-symbols-outlined text-base">arrow_forward</span> Next Question</>}
+                            ? <><span className="material-symbols-outlined text-base">done_all</span> {t.tracker_finish_challenge || 'Finish Challenge'}</>
+                            : <><span className="material-symbols-outlined text-base">arrow_forward</span> {t.tracker_next_question || 'Next Question'}</>}
                     </button>
 
                     <p className="text-center text-[9px] font-bold uppercase tracking-widest text-slate-300 mt-4">
-                        Close / ✕ to stop and save progress
+                        {t.tracker_close_save || 'Close / ✕ to stop and save progress'}
                     </p>
                 </div>
             </div>
@@ -510,7 +574,8 @@ function ChallengeModal({ category, queue, onClose }: {
 
 function TrackerContent() {
     const searchParams = useSearchParams();
-    const currentLang = (searchParams.get('lang') || 'en') as string;
+    const currentLang = (searchParams.get('lang') || 'en') as Language;
+    const t = translations[currentLang] || translations['en'];
 
     const [allArticles, setAllArticles] = useState<Article[]>([]);
     const [quizScores, setQuizScores] = useState<Record<string, SavedScore>>({});
@@ -612,13 +677,13 @@ function TrackerContent() {
                     {/* ── Page Header ── */}
                     <div className="mb-14 text-center">
                         <span className="inline-block text-[10px] font-black uppercase tracking-[0.4em] text-saffron mb-4">
-                            Knowledge Challenge Arena
+                            {t.tracker_arena || 'Knowledge Challenge Arena'}
                         </span>
                         <h1 className="text-4xl lg:text-5xl font-bold font-serif-title text-spiritual-blue tracking-tight mb-4">
-                            MCQ <span className="text-saffron italic">Mastery</span> Tracker
+                            {t.tracker_title_mcq || 'MCQ'} <span className="text-saffron italic">{t.tracker_title_mastery || 'Mastery'}</span> {t.tracker_title_tracker || 'Tracker'}
                         </h1>
                         <p className="text-slate-500 max-w-xl mx-auto leading-relaxed">
-                            Answer real questions from every article. Earn XP, climb ranks, and prove your mastery of Brahmacharya wisdom.
+                            {t.tracker_desc || 'Answer real questions from every article. Earn XP, climb ranks, and prove your mastery of Brahmacharya wisdom.'}
                         </p>
                     </div>
 
@@ -635,8 +700,8 @@ function TrackerContent() {
                                 <div className="flex flex-col items-center gap-3">
                                     <ScoreRing correct={globalStats.correctA} total={globalStats.answeredQ} size={150} />
                                     <div className="text-center">
-                                        <div className="text-xs font-bold text-white/50 uppercase tracking-widest">Overall Accuracy</div>
-                                        <div className="text-xs text-white/30">{globalStats.correctA} correct of {globalStats.answeredQ} answered</div>
+                                        <div className="text-xs font-bold text-white/50 uppercase tracking-widest">{t.tracker_overall_accuracy || 'Overall Accuracy'}</div>
+                                        <div className="text-xs text-white/30">{globalStats.correctA} {t.tracker_correct_of || 'correct of'} {globalStats.answeredQ} {t.tracker_answered || 'answered'}</div>
                                     </div>
                                 </div>
 
@@ -646,21 +711,21 @@ function TrackerContent() {
                                         <span className="material-symbols-outlined text-4xl" style={{ color: rank.color }}>{rank.icon}</span>
                                     </div>
                                     <div className="text-xl font-black font-serif-title" style={{ color: rank.color }}>{rank.label}</div>
-                                    <div className="text-xs text-white/40 uppercase tracking-widest">Current Rank</div>
+                                    <div className="text-xs text-white/40 uppercase tracking-widest">{t.tracker_current_rank || 'Current Rank'}</div>
                                     <div className="flex items-center gap-2 px-5 py-2 bg-white/10 rounded-full border border-white/10">
                                         <span className="material-symbols-outlined text-sm text-yellow-400">bolt</span>
                                         <span className="font-black text-yellow-300 text-sm">{globalStats.xp.toLocaleString()} XP</span>
                                     </div>
-                                    <div className="text-xs text-white/30">{globalStats.articlesDone} articles completed</div>
+                                    <div className="text-xs text-white/30">{globalStats.articlesDone} {t.tracker_articles_completed || 'articles completed'}</div>
                                 </div>
 
                                 {/* Stat grid */}
                                 <div className="grid grid-cols-2 gap-3">
                                     {[
-                                        { val: globalStats.answeredQ, label: 'Questions Answered', color: 'text-white' },
-                                        { val: globalStats.totalQ, label: 'Total Available', color: 'text-white/60' },
-                                        { val: globalStats.correctA, label: 'Correct Answers', color: 'text-emerald-400' },
-                                        { val: globalStats.answeredQ - globalStats.correctA, label: 'Incorrect', color: 'text-red-400' },
+                                        { val: globalStats.answeredQ, label: t.tracker_questions_answered || 'Questions Answered', color: 'text-white' },
+                                        { val: globalStats.totalQ, label: t.tracker_total_available || 'Total Available', color: 'text-white/60' },
+                                        { val: globalStats.correctA, label: t.tracker_correct_answers || 'Correct Answers', color: 'text-emerald-400' },
+                                        { val: globalStats.answeredQ - globalStats.correctA, label: t.tracker_incorrect || 'Incorrect', color: 'text-red-400' },
                                     ].map(({ val, label, color }) => (
                                         <div key={label} className="bg-white/8 rounded-2xl p-4 text-center border border-white/10">
                                             <div className={`text-2xl font-black ${color}`}>{val.toLocaleString()}</div>
@@ -708,13 +773,13 @@ function TrackerContent() {
                         <section className="mb-20">
                             <div className="flex items-center gap-4 mb-10">
                                 <span className="material-symbols-outlined text-red-500 text-2xl">security_update_warning</span>
-                                <h2 className="text-xl font-bold font-serif-title text-red-600">Distraction Zone Challenges</h2>
+                                <h2 className="text-xl font-bold font-serif-title text-red-600">{t.tracker_distraction_zone || 'Distraction Zone Challenges'}</h2>
                                 <div className="h-px flex-1 bg-gradient-to-r from-red-200 to-transparent" />
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-7">
                                 {trapCats.map(cat => (
                                     <CategoryCard key={cat} cat={cat} stats={getCategoryStats(cat)}
-                                        onChallenge={(retake) => { setChallengeCategory(cat); setRetakeMode(retake); }} />
+                                        onChallenge={(retake) => { setChallengeCategory(cat); setRetakeMode(retake); }} lang={currentLang} t={t} />
                                 ))}
                             </div>
                         </section>
@@ -725,13 +790,13 @@ function TrackerContent() {
                         <section className="mb-20">
                             <div className="flex items-center gap-4 mb-10">
                                 <span className="material-symbols-outlined text-indigo-500 text-2xl">auto_stories</span>
-                                <h2 className="text-xl font-bold font-serif-title text-indigo-700">Wisdom Zone Challenges</h2>
+                                <h2 className="text-xl font-bold font-serif-title text-indigo-700">{t.tracker_wisdom_zone || 'Wisdom Zone Challenges'}</h2>
                                 <div className="h-px flex-1 bg-gradient-to-r from-indigo-200 to-transparent" />
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-7">
                                 {wisdomCats.map(cat => (
                                     <CategoryCard key={cat} cat={cat} stats={getCategoryStats(cat)}
-                                        onChallenge={(retake) => { setChallengeCategory(cat); setRetakeMode(retake); }} />
+                                        onChallenge={(retake) => { setChallengeCategory(cat); setRetakeMode(retake); }} lang={currentLang} t={t} />
                                 ))}
                             </div>
                         </section>
@@ -748,7 +813,7 @@ function TrackerContent() {
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-7">
                                 {otherCats.map(cat => (
                                     <CategoryCard key={cat} cat={cat} stats={getCategoryStats(cat)}
-                                        onChallenge={(retake) => { setChallengeCategory(cat); setRetakeMode(retake); }} />
+                                        onChallenge={(retake) => { setChallengeCategory(cat); setRetakeMode(retake); }} lang={currentLang} t={t} />
                                 ))}
                             </div>
                         </section>
@@ -775,6 +840,7 @@ function TrackerContent() {
                     category={challengeCategory}
                     queue={buildQueue(challengeCategory, retakeMode)}
                     onClose={() => { setChallengeCategory(null); refreshScores(); }}
+                    lang={currentLang} t={t}
                 />
             )}
         </div>
