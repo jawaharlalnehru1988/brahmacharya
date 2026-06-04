@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { translations, Language } from '../lib/translations';
+import { translations, Language, LANGUAGE_NAMES } from '../lib/translations';
 
 const HeaderContent = () => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -16,6 +16,13 @@ const HeaderContent = () => {
     const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
     const setLanguage = (lang: string) => {
+        // If we're on an article detail page, redirect to home in the new language.
+        // Articles don't share slugs across languages, so staying on the same slug
+        // would show a mismatched language UI with the original-language article content.
+        if (pathname.startsWith('/articles/')) {
+            router.push(`/?lang=${lang}`);
+            return;
+        }
         const params = new URLSearchParams(searchParams.toString());
         params.set('lang', lang);
         router.push(`${pathname}?${params.toString()}`);
@@ -55,18 +62,22 @@ const HeaderContent = () => {
                         
                         {/* Language Switcher Desktop */}
                         <div className="flex items-center gap-2 border-l border-gold/20 pl-6 ml-2">
-                            <button 
-                                onClick={() => setLanguage('en')}
-                                className={`text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded-md transition-all ${currentLang === 'en' ? 'bg-saffron text-white shadow-sm' : 'text-slate-400 hover:text-saffron'}`}
+                            <select
+                                value={currentLang}
+                                onChange={(e) => setLanguage(e.target.value)}
+                                className="bg-transparent text-xs font-bold text-slate-600 focus:outline-none focus:ring-0 cursor-pointer appearance-none px-2 py-1"
+                                style={{ WebkitAppearance: 'none', MozAppearance: 'none' }}
                             >
-                                EN
-                            </button>
-                            <button 
-                                onClick={() => setLanguage('ta')}
-                                className={`text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded-md transition-all ${currentLang === 'ta' ? 'bg-saffron text-white shadow-sm' : 'text-slate-400 hover:text-saffron'}`}
-                            >
-                                தமிழ்
-                            </button>
+                                <option value="en">{LANGUAGE_NAMES['en']}</option>
+                                <option value="ta">{LANGUAGE_NAMES['ta']}</option>
+                                <option value="hi">{LANGUAGE_NAMES['hi']}</option>
+                                {Object.entries(LANGUAGE_NAMES)
+                                    .filter(([key]) => !['en', 'ta', 'hi'].includes(key))
+                                    .map(([key, name]) => (
+                                        <option key={key} value={key}>{name}</option>
+                                    ))}
+                            </select>
+                            <span className="material-symbols-outlined text-sm text-slate-400 pointer-events-none -ml-1">expand_more</span>
                         </div>
                     </nav>
 
@@ -82,6 +93,26 @@ const HeaderContent = () => {
                             className="h-10 w-10 rounded-full border-2 border-gold/30 bg-cover bg-center overflow-hidden"
                             style={{ backgroundImage: "url('/srila_prabhupada.png')" }}
                         ></div>
+
+                        {/* Mobile Language Switcher (Visible in Mobile Logo Area) */}
+                        <div className="flex md:hidden items-center gap-1 border border-gold/20 rounded-lg px-2 h-10 bg-white/50 relative">
+                            <select
+                                value={currentLang}
+                                onChange={(e) => setLanguage(e.target.value)}
+                                className="bg-transparent text-xs font-bold text-spiritual-blue focus:outline-none focus:ring-0 cursor-pointer appearance-none pl-1 pr-4 w-full h-full"
+                                style={{ WebkitAppearance: 'none', MozAppearance: 'none' }}
+                            >
+                                <option value="en">{LANGUAGE_NAMES['en']}</option>
+                                <option value="ta">{LANGUAGE_NAMES['ta']}</option>
+                                <option value="hi">{LANGUAGE_NAMES['hi']}</option>
+                                {Object.entries(LANGUAGE_NAMES)
+                                    .filter(([key]) => !['en', 'ta', 'hi'].includes(key))
+                                    .map(([key, name]) => (
+                                        <option key={key} value={key}>{name}</option>
+                                    ))}
+                            </select>
+                            <span className="material-symbols-outlined text-[16px] text-spiritual-blue pointer-events-none absolute right-1">expand_more</span>
+                        </div>
 
                         {/* Mobile Hamburger Button */}
                         <button
@@ -131,24 +162,7 @@ const HeaderContent = () => {
                             </Link>
                         ))}
 
-                        {/* Language Switcher Mobile */}
-                        <div className="mt-8 pt-8 border-t border-gold/10">
-                            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 mb-4 block px-4">{t.select_language}</span>
-                            <div className="flex gap-4 px-4">
-                                <button
-                                    onClick={() => { setLanguage('en'); setIsMenuOpen(false); }}
-                                    className={`flex-1 h-12 rounded-2xl font-bold transition-all ${currentLang === 'en' ? 'bg-saffron text-white shadow-lg shadow-saffron/20' : 'bg-slate-50 text-slate-400 border border-slate-100'}`}
-                                >
-                                    English
-                                </button>
-                                <button
-                                    onClick={() => { setLanguage('ta'); setIsMenuOpen(false); }}
-                                    className={`flex-1 h-12 rounded-2xl font-bold transition-all ${currentLang === 'ta' ? 'bg-saffron text-white shadow-lg shadow-saffron/20' : 'bg-slate-50 text-slate-400 border border-slate-100'}`}
-                                >
-                                    தமிழ்
-                                </button>
-                            </div>
-                        </div>
+
                     </nav>
 
                     <div className="p-6 border-t border-gold/10 bg-white">

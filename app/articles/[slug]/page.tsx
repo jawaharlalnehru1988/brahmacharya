@@ -8,6 +8,22 @@ import Link from 'next/link';
 import Header from '../../components/Header';
 import Footer from '../../components/Footer';
 import MarkAsRead from '../../components/MarkAsRead';
+import ArticleQuiz from '../../components/ArticleQuiz';
+
+interface QuizOption {
+    id: number;
+    order: number;
+    option_text: string;
+    is_correct: boolean;
+}
+
+interface QuizQuestion {
+    id: number;
+    order: number;
+    question_text: string;
+    is_active: boolean;
+    options: QuizOption[];
+}
 
 interface Article {
     title: string;
@@ -123,6 +139,14 @@ export default async function ArticlePage({ params, searchParams }: { params: Pr
 
                     {/* Mark as Read Component */}
                     <MarkAsRead slug={slug} title={article.title} />
+
+                    {/* MCQ Quiz Section */}
+                    <ArticleQuiz
+                        questions={article.questions || []}
+                        articleSlug={slug}
+                        articleTitle={article.title}
+                        lang={currentLang}
+                    />
 
                     {/* Navigation Suggestions */}
                     <div className="mt-24 grid grid-cols-1 md:grid-cols-2 gap-8 border-t border-gold/10 pt-16">

@@ -1,311 +1,791 @@
 'use client';
-import React, { useState, useEffect, Suspense } from 'react';
+import React, { useState, useEffect, useCallback, Suspense, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 
+// ─── Types ───────────────────────────────────────────────────────────────────
+
+interface QuizOption {
+    id: number; order: number; option_text: string; is_correct: boolean;
+}
+interface QuizQuestion {
+    id: number; order: number; question_text: string; is_active: boolean; options: QuizOption[];
+}
 interface Article {
-    category: string;
-    title: string;
-    slug: string;
+    id: number; title: string; slug: string; category: string; order: number;
+    questions: QuizQuestion[];
+}
+interface SavedScore {
+    score: number; total: number; savedAt: string; articleTitle: string;
+}
+interface QuizEntry {
+    question: QuizQuestion; articleSlug: string; articleTitle: string;
+}
+interface SessionAnswer {
+    articleSlug: string; articleTitle: string; isCorrect: boolean;
 }
 
-const CATEGORY_MAP: Record<string, { icon: string; color: string; type: 'trap' | 'wisdom' }> = {
-    "DIGITAL VISUAL STIMULATION TRAPS": { icon: "devices", color: "text-red-500", type: 'trap' },
-    "PSYCHOLOGICAL & NEUROCHEMICAL TRAPS": { icon: "psychology", color: "text-purple-500", type: 'trap' },
-    "CONSUMERISM & LIFESTYLE TRAPS": { icon: "shopping_bag", color: "text-amber-500", type: 'trap' },
-    "WORKPLACE & SOCIAL ENVIRONMENT TRAPS": { icon: "business_center", color: "text-blue-500", type: 'trap' },
-    "MEDIA & ENTERTAINMENT TRAPS": { icon: "theaters", color: "text-indigo-500", type: 'trap' },
-    "PRABHUPĀDA INSTRUCTIONAL QUOTE THEMES": { icon: "format_quote", color: "text-saffron", type: 'wisdom' },
-    "VEDIC / GĪTĀ / UPANIṢADIC INSTRUCTIONS": { icon: "menu_book", color: "text-gold", type: 'wisdom' },
-    "PURĀṆIC & ITIHĀSA STORIES - CHARACTER CASE STUDIES": { icon: "history_edu", color: "text-spiritual-blue", type: 'wisdom' },
-    "MODERN REAL-LIFE CASE THEMES": { icon: "diversity_1", color: "text-emerald-500", type: 'wisdom' },
-    "FOUNDATIONAL RESOLUTION": { icon: "military_tech", color: "text-saffron", type: 'wisdom' },
-    "DAILY REGULATION": { icon: "wb_twilight", color: "text-saffron", type: 'wisdom' },
-    "CHANTING INFRASTRUCTURE": { icon: "record_voice_over", color: "text-saffron", type: 'wisdom' },
-    "MIND MANAGEMENT": { icon: "psychology", color: "text-saffron", type: 'wisdom' },
-    "SENSE REGULATION": { icon: "restaurant", color: "text-saffron", type: 'wisdom' },
-    "ASSOCIATION ARCHITECTURE": { icon: "groups", color: "text-saffron", type: 'wisdom' },
-    "SCRIPTURAL ABSORPTION": { icon: "menu_book", color: "text-saffron", type: 'wisdom' },
-    "FALL-RECOVERY PROTOCOL": { icon: "healing", color: "text-saffron", type: 'wisdom' },
-    "STABILITY & HIGHER TASTE": { icon: "stars", color: "text-saffron", type: 'wisdom' },
-    "NIṢṬHĀ MAINTENANCE": { icon: "verified", color: "text-saffron", type: 'wisdom' }
+// ─── Constants ────────────────────────────────────────────────────────────────
+
+const CATEGORY_MAP: Record<string, { icon: string; accent: string; type: 'trap' | 'wisdom' }> = {
+    "DIGITAL VISUAL STIMULATION TRAPS":                      { icon: "devices",            accent: "#ef4444", type: 'trap'   },
+    "PSYCHOLOGICAL & NEUROCHEMICAL TRAPS":                   { icon: "psychology",         accent: "#a855f7", type: 'trap'   },
+    "CONSUMERISM & LIFESTYLE TRAPS":                         { icon: "shopping_bag",       accent: "#f59e0b", type: 'trap'   },
+    "WORKPLACE & SOCIAL ENVIRONMENT TRAPS":                  { icon: "business_center",    accent: "#3b82f6", type: 'trap'   },
+    "MEDIA & ENTERTAINMENT TRAPS":                           { icon: "theaters",           accent: "#6366f1", type: 'trap'   },
+    "PRABHUPĀDA INSTRUCTIONAL QUOTE THEMES":                 { icon: "format_quote",       accent: "#FF9933", type: 'wisdom' },
+    "VEDIC / GĪTĀ / UPANIṢADIC INSTRUCTIONS":               { icon: "menu_book",          accent: "#D4AF37", type: 'wisdom' },
+    "PURĀṆIC & ITIHĀSA STORIES - CHARACTER CASE STUDIES":   { icon: "history_edu",        accent: "#1A365D", type: 'wisdom' },
+    "MODERN REAL-LIFE CASE THEMES":                          { icon: "diversity_1",        accent: "#10b981", type: 'wisdom' },
+    "FOUNDATIONAL RESOLUTION":                               { icon: "military_tech",      accent: "#FF9933", type: 'wisdom' },
+    "DAILY REGULATION":                                      { icon: "wb_twilight",        accent: "#FF9933", type: 'wisdom' },
+    "CHANTING INFRASTRUCTURE":                               { icon: "record_voice_over",  accent: "#FF9933", type: 'wisdom' },
+    "MIND MANAGEMENT":                                       { icon: "psychology",         accent: "#6366f1", type: 'wisdom' },
+    "SENSE REGULATION":                                      { icon: "restaurant",         accent: "#10b981", type: 'wisdom' },
+    "ASSOCIATION ARCHITECTURE":                              { icon: "groups",             accent: "#D4AF37", type: 'wisdom' },
+    "SCRIPTURAL ABSORPTION":                                 { icon: "menu_book",          accent: "#1A365D", type: 'wisdom' },
+    "FALL-RECOVERY PROTOCOL":                                { icon: "healing",            accent: "#ef4444", type: 'wisdom' },
+    "STABILITY & HIGHER TASTE":                              { icon: "stars",              accent: "#D4AF37", type: 'wisdom' },
+    "NIṢṬHĀ MAINTENANCE":                                   { icon: "verified",           accent: "#6366f1", type: 'wisdom' },
 };
 
-function TrackerContent() {
-    const searchParams = useSearchParams();
-    const urlCategory = searchParams.get('category');
+const RANKS = [
+    { min: 95, label: "Liberated Scholar",   icon: "emoji_events",    color: "#f59e0b" },
+    { min: 80, label: "Niṣṭhā Keeper",       icon: "verified",         color: "#6366f1" },
+    { min: 60, label: "Brahmacārī",          icon: "self_improvement", color: "#1A365D" },
+    { min: 40, label: "Practicing Devotee",  icon: "spa",              color: "#10b981" },
+    { min: 20, label: "Sincere Sādhaka",     icon: "hiking",           color: "#f59e0b" },
+    { min: 0,  label: "Seeking Soul",        icon: "search",           color: "#94a3b8" },
+];
 
-    const [allArticles, setAllArticles] = useState<Article[]>([]);
-    const [categories, setCategories] = useState<string[]>([]);
-    const [activeZone, setActiveZone] = useState<string | null>(null);
-    const [auditStep, setAuditStep] = useState(0);
-    const [tempAnswers, setTempAnswers] = useState<number[]>([]);
-    const [savedScores, setSavedScores] = useState<Record<string, number>>({});
-    const [loading, setLoading] = useState(true);
+function getRank(pct: number) {
+    return RANKS.find(r => pct >= r.min) ?? RANKS[RANKS.length - 1];
+}
 
-    const currentLang = searchParams.get('lang') || 'en';
+const optionLetters = ['A', 'B', 'C', 'D', 'E', 'F'];
 
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const url = `https://api.askharekrishna.com/api/v1/brahmhacarya/?language=${currentLang}`;
-                const res = await fetch(url);
-                const articles: Article[] = await res.json();
-                setAllArticles(articles);
+// ─── Score Ring ───────────────────────────────────────────────────────────────
 
-                const uniqueCats = Array.from(new Set(articles.map(a => a.category)));
-                setCategories(uniqueCats);
-
-                const saved = localStorage.getItem('auro_zone_scores');
-                if (saved) setSavedScores(JSON.parse(saved));
-
-                // If URL has category, start audit immediately
-                if (urlCategory && uniqueCats.includes(urlCategory)) {
-                    setActiveZone(urlCategory);
-                }
-            } catch (e) {
-                console.error("Fetch failed", e);
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchData();
-    }, [urlCategory, currentLang]);
-
-    const activeArticles = allArticles.filter(a => a.category === activeZone);
-
-    const handleAuditOption = (weight: number) => {
-        const newAnswers = [...tempAnswers, weight];
-        if (auditStep < activeArticles.length - 1) {
-            setTempAnswers(newAnswers);
-            setAuditStep(auditStep + 1);
-        } else {
-            const avg = Math.round(newAnswers.reduce((a, b) => a + b, 0) / activeArticles.length);
-            const updated = { ...savedScores, [activeZone!]: avg };
-            setSavedScores(updated);
-            localStorage.setItem('auro_zone_scores', JSON.stringify(updated));
-
-            setTimeout(() => {
-                setActiveZone(null);
-                setAuditStep(0);
-                setTempAnswers([]);
-            }, 300);
-        }
-    };
-
-    const getZoneStatus = (cat: string, score: number) => {
-        const isTrap = CATEGORY_MAP[cat]?.type === 'trap';
-        if (isTrap) {
-            if (score >= 80) return { label: 'Deactivated', color: 'text-emerald-500', bg: 'bg-emerald-50' };
-            if (score >= 50) return { label: 'Compromised', color: 'text-amber-500', bg: 'bg-amber-50' };
-            return { label: 'Vulnerable', color: 'text-red-500', bg: 'bg-red-50' };
-        } else {
-            if (score >= 80) return { label: 'Absorbed', color: 'text-indigo-600', bg: 'bg-indigo-50' };
-            if (score >= 50) return { label: 'Learning', color: 'text-spiritual-blue', bg: 'bg-blue-50' };
-            return { label: 'Unstable', color: 'text-slate-400', bg: 'bg-slate-50' };
-        }
-    };
-
-    if (loading) return (
-        <div className="min-h-screen flex flex-col items-center justify-center bg-white space-y-6">
-            <div className="h-16 w-16 border-4 border-slate-100 border-t-saffron rounded-full animate-spin"></div>
-            <div className="text-spiritual-blue font-bold uppercase tracking-widest text-xs animate-pulse">Synchronizing with Global Library...</div>
-        </div>
-    );
-
-    const trapZones = categories.filter(c => CATEGORY_MAP[c]?.type === 'trap');
-    const wisdomZones = categories.filter(c => CATEGORY_MAP[c]?.type === 'wisdom');
-
+function ScoreRing({ correct, total, size = 130 }: { correct: number; total: number; size?: number }) {
+    const pct = total > 0 ? correct / total : 0;
+    const r = size * 0.36;
+    const circ = 2 * Math.PI * r;
+    const stroke = size * 0.09;
+    const color = pct >= 0.8 ? '#10b981' : pct >= 0.6 ? '#D4AF37' : pct >= 0.4 ? '#FF9933' : '#94a3b8';
     return (
-        <div className="relative flex min-h-screen w-full flex-col bg-white">
-            <Header />
-            <main className="flex-1 px-6 py-16 lg:px-20 lg:py-24 max-w-7xl mx-auto w-full">
-
-                <div className="mb-24 space-y-4 text-center lg:text-left">
-                    <span className="text-sm font-bold uppercase tracking-[0.4em] text-saffron">Dynamic Vector Tracker</span>
-                    <h1 className="text-4xl lg:text-6xl font-bold font-serif-title text-spiritual-blue tracking-tight leading-tight">
-                        Zone <span className="text-saffron italic underline decoration-gold/30">Mastery</span> Metrics
-                    </h1>
-                    <p className="text-lg text-slate-600 max-w-3xl font-medium leading-relaxed">
-                        Assess your understanding and implementation of specific spiritual topics. Each question is derived directly from the articles in the selected category.
-                    </p>
-                </div>
-
-                {trapZones.length > 0 && (
-                    <div className="mb-28">
-                        <h4 className="text-2xl font-bold text-red-600 font-serif-title mb-12 flex items-center gap-4">
-                            <span className="material-symbols-outlined text-3xl">security_update_warning</span>
-                            Distraction Zones (Deactivation Status)
-                        </h4>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-                            {trapZones.map(cat => (
-                                <ZoneCard
-                                    key={cat}
-                                    cat={cat}
-                                    score={savedScores[cat]}
-                                    onAudit={() => { setActiveZone(cat); setAuditStep(0); setTempAnswers([]); }}
-                                    status={getZoneStatus(cat, savedScores[cat] || 0)}
-                                />
-                            ))}
-                        </div>
-                    </div>
-                )}
-
-                {wisdomZones.length > 0 && (
-                    <div className="mb-28">
-                        <h4 className="text-2xl font-bold text-indigo-600 font-serif-title mb-12 flex items-center gap-4">
-                            <span className="material-symbols-outlined text-3xl">auto_stories</span>
-                            Adaptation Zones (Wisdom Absorption)
-                        </h4>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-                            {wisdomZones.map(cat => (
-                                <ZoneCard
-                                    key={cat}
-                                    cat={cat}
-                                    score={savedScores[cat]}
-                                    onAudit={() => { setActiveZone(cat); setAuditStep(0); setTempAnswers([]); }}
-                                    status={getZoneStatus(cat, savedScores[cat] || 0)}
-                                />
-                            ))}
-                        </div>
-                    </div>
-                )}
-
-                <div className="text-center pt-20 border-t border-slate-100 italic flex flex-col items-center">
-                    <button
-                        onClick={() => { if (confirm("Erase all mastery tracking data?")) { localStorage.removeItem('auro_zone_scores'); window.location.reload(); } }}
-                        className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-slate-300 hover:text-red-500 transition-colors"
-                    >
-                        <span className="material-symbols-outlined text-sm">restart_alt</span>
-                        Reset All Mastery States
-                    </button>
-                </div>
-
-                {activeZone && activeArticles.length > 0 && (
-                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 lg:p-12 overflow-y-auto">
-                        <div
-                            className="absolute inset-0 bg-indigo-950/40 backdrop-blur-md animate-fade-in"
-                            onClick={() => setActiveZone(null)}
-                        ></div>
-
-                        <div className="w-full max-w-2xl bg-white rounded-[3rem] p-8 lg:p-12 shadow-2xl relative z-10 animate-scale-up max-h-[92vh] overflow-y-auto flex flex-col my-4">
-                            <button
-                                onClick={() => setActiveZone(null)}
-                                className="absolute top-4 right-4 h-10 w-10 flex items-center justify-center rounded-full hover:bg-slate-100 text-slate-400 transition-all z-20"
-                            >
-                                <span className="material-symbols-outlined">close</span>
-                            </button>
-
-                            <div className="flex items-center gap-4 mb-10">
-                                <div className={`h-12 w-12 rounded-xl flex items-center justify-center shadow-inner ${CATEGORY_MAP[activeZone]?.color || 'text-saffron'} bg-white opacity-80`}>
-                                    <span className="material-symbols-outlined">{CATEGORY_MAP[activeZone]?.icon || 'analytics'}</span>
-                                </div>
-                                <div className="min-w-0">
-                                    <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 block mb-1">Topic Mastery Audit</span>
-                                    <h4 className="text-xs font-bold text-spiritual-blue uppercase tracking-widest truncate max-w-[250px]">{activeZone.replace(' - CHARACTER CASE STUDIES', '')}</h4>
-                                </div>
-                            </div>
-
-                            <div className="animate-fade-in">
-                                <h2 className="text-2xl lg:text-3xl font-bold text-spiritual-blue font-serif-title leading-snug mb-12">
-                                    What is your rating in understanding and planning for implementation in <span className="text-saffron italic">&quot;{activeArticles[auditStep].title.replace(/^\d+\.\s*/, '')}&quot;</span>?
-                                </h2>
-                                <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
-                                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((val) => (
-                                        <button
-                                            key={val}
-                                            onClick={() => handleAuditOption(val * 10)}
-                                            className="group flex flex-col items-center gap-1 p-4 rounded-2xl border-2 border-slate-50 bg-slate-50/50 hover:border-saffron hover:bg-white transition-all scale-100 active:scale-95"
-                                        >
-                                            <span className="text-xl font-black text-slate-300 group-hover:text-saffron">{val}</span>
-                                            <span className="text-[9px] uppercase font-bold tracking-widest opacity-0 group-hover:opacity-100 text-saffron">Rate</span>
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-
-                            <div className="mt-12 flex justify-between items-center text-[10px] font-bold text-slate-300 uppercase tracking-widest">
-                                <span>Question {auditStep + 1} of {activeArticles.length}</span>
-                                <div className="flex gap-1">
-                                    <div className="h-1.5 bg-slate-100 rounded-full w-32 relative overflow-hidden">
-                                        <div
-                                            className="absolute top-0 left-0 h-full bg-saffron transition-all duration-500"
-                                            style={{ width: `${((auditStep + 1) / activeArticles.length) * 100}%` }}
-                                        ></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                )}
-            </main>
-            <Footer />
-            <style jsx global>{`
-                @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
-                @keyframes scale-up { from { opacity: 0; transform: scale(0.95) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
-                .animate-fade-in { animation: fade-in 0.4s ease-out forwards; }
-                .animate-scale-up { animation: scale-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-            `}</style>
+        <div className="relative inline-flex items-center justify-center">
+            <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="-rotate-90">
+                <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#e2e8f0" strokeWidth={stroke} />
+                <circle
+                    cx={size / 2} cy={size / 2} r={r} fill="none" stroke={color}
+                    strokeWidth={stroke} strokeLinecap="round"
+                    strokeDasharray={`${pct * circ} ${circ}`}
+                    style={{ transition: 'stroke-dasharray 1.1s ease-out' }}
+                />
+            </svg>
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <span className="font-black leading-none" style={{ fontSize: size * 0.19, color }}>
+                    {total > 0 ? Math.round(pct * 100) : 0}%
+                </span>
+                <span className="text-slate-400 font-bold" style={{ fontSize: size * 0.1 }}>
+                    {correct}/{total}
+                </span>
+            </div>
         </div>
     );
 }
 
-const ZoneCard = ({ cat, score, onAudit, status }: any) => {
-    const meta = CATEGORY_MAP[cat] || { icon: 'star', color: 'text-slate-400' };
-    const bgColor = meta.color.replace('text', 'bg');
+// ─── Save answers helper ──────────────────────────────────────────────────────
+
+function saveAnswersToStorage(answers: SessionAnswer[]) {
+    if (answers.length === 0) return;
+    const existing: Record<string, SavedScore> = JSON.parse(localStorage.getItem('quiz_scores') || '{}');
+    const byArticle: Record<string, { score: number; total: number; title: string }> = {};
+    answers.forEach(a => {
+        if (!byArticle[a.articleSlug]) byArticle[a.articleSlug] = { score: 0, total: 0, title: a.articleTitle };
+        byArticle[a.articleSlug].total += 1;
+        if (a.isCorrect) byArticle[a.articleSlug].score += 1;
+    });
+    Object.entries(byArticle).forEach(([slug, data]) => {
+        existing[slug] = { score: data.score, total: data.total, savedAt: new Date().toISOString(), articleTitle: data.title };
+    });
+    localStorage.setItem('quiz_scores', JSON.stringify(existing));
+}
+
+// ─── Category Card ────────────────────────────────────────────────────────────
+
+interface CatStats {
+    totalArticles: number; totalQuestions: number;
+    completedArticles: number; answeredQuestions: number; correctAnswers: number; pct: number;
+}
+
+function CategoryCard({ cat, stats, onChallenge }: {
+    cat: string; stats: CatStats; onChallenge: (retake: boolean) => void;
+}) {
+    const meta = CATEGORY_MAP[cat] ?? { icon: 'quiz', accent: '#94a3b8', type: 'wisdom' };
+    const { totalArticles, totalQuestions, completedArticles, answeredQuestions, correctAnswers, pct } = stats;
+    const isComplete = completedArticles >= totalArticles && totalArticles > 0;
+    const hasStarted = answeredQuestions > 0;
+    const progressPct = totalQuestions > 0 ? Math.round((answeredQuestions / totalQuestions) * 100) : 0;
+    const noQuestions = totalQuestions === 0;
 
     return (
-        <div className={`group relative rounded-[2.5rem] border-2 bg-white p-10 transition-all hover:shadow-2xl ${score !== undefined ? 'border-indigo-100 shadow-xl shadow-slate-200/50' : 'border-slate-100'} flex flex-col h-full`}>
-            <div className="flex items-center gap-6 mb-8">
-                <div className={`flex h-16 w-16 items-center justify-center rounded-2xl shadow-inner ${meta.color} bg-white group-hover:scale-110 transition-transform`}>
-                    <span className="material-symbols-outlined text-4xl">{meta.icon}</span>
+        <div className="group relative rounded-[2rem] bg-white border border-gold/10 p-7 flex flex-col h-full transition-all duration-300 hover:shadow-xl hover:shadow-slate-200/60 hover:-translate-y-1">
+            {/* Accent top stripe */}
+            <div className="absolute top-0 left-6 right-6 h-0.5 rounded-b-full" style={{ backgroundColor: meta.accent }} />
+
+            <div className="flex items-start gap-4 mb-5 pt-3">
+                <div className="flex-shrink-0 w-11 h-11 rounded-xl flex items-center justify-center transition-transform duration-300 group-hover:scale-110"
+                    style={{ backgroundColor: meta.accent + '18' }}>
+                    <span className="material-symbols-outlined text-xl" style={{ color: meta.accent }}>{meta.icon}</span>
                 </div>
                 <div className="flex-1 min-w-0">
-                    <h5 className="font-bold text-spiritual-blue font-serif-title leading-tight text-lg line-clamp-2">{cat.replace(' - CHARACTER CASE STUDIES', '')}</h5>
-                    {score !== undefined && (
-                        <span className={`inline-block mt-2 text-[10px] font-black uppercase tracking-widest ${status.color} ${status.bg} px-3 py-1 rounded-full`}>
-                            {status.label}
+                    <h3 className="font-bold text-spiritual-blue text-sm leading-tight font-serif-title line-clamp-2">
+                        {cat.replace(' - CHARACTER CASE STUDIES', '')}
+                    </h3>
+                    {isComplete && (
+                        <span className="inline-flex items-center gap-1 mt-1.5 text-[9px] font-black uppercase tracking-widest text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                            <span className="material-symbols-outlined text-[10px]">check_circle</span> Complete
                         </span>
                     )}
                 </div>
             </div>
 
-            <p className="text-slate-500 text-sm italic font-medium mb-10 opacity-70">
-                {CATEGORY_MAP[cat]?.type === 'trap'
-                    ? "Monitor and deactivate sensory vulnerabilities in this zone."
-                    : "Absorb and internalize spiritual principles from this zone."
-                }
-            </p>
-
-            <div className="mt-auto">
-                {score !== undefined ? (
-                    <div className="space-y-4">
-                        <div className="flex justify-between items-end">
-                            <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Mastery Level</span>
-                            <span className={`text-2xl font-black ${status.color}`}>{score}%</span>
-                        </div>
-                        <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
-                            <div
-                                className={`h-full transition-all duration-[1200ms] ${bgColor}`}
-                                style={{ width: `${score}%` }}
-                            ></div>
-                        </div>
-                        <button onClick={onAudit} className="w-full py-4 text-[10px] font-bold uppercase tracking-widest text-slate-500 border-2 border-slate-50 hover:bg-slate-50 rounded-2xl transition-all">Re-Audit Zone</button>
+            {/* 3-stat row */}
+            <div className="grid grid-cols-3 gap-2 mb-5">
+                {[
+                    { val: totalArticles, label: 'Articles' },
+                    { val: totalQuestions, label: 'Questions' },
+                    { val: noQuestions ? '—' : `${pct}%`, label: 'Score' },
+                ].map(({ val, label }) => (
+                    <div key={label} className="text-center p-2.5 rounded-xl" style={{ backgroundColor: meta.accent + '0E' }}>
+                        <div className="text-base font-black" style={{ color: hasStarted || label === 'Articles' || label === 'Questions' ? meta.accent : '#94a3b8' }}>{val}</div>
+                        <div className="text-[9px] font-bold uppercase tracking-widest text-slate-400">{label}</div>
                     </div>
+                ))}
+            </div>
+
+            {/* Progress */}
+            {hasStarted && (
+                <div className="mb-5">
+                    <div className="flex justify-between text-[9px] font-bold uppercase tracking-widest text-slate-400 mb-1.5">
+                        <span>{answeredQuestions}/{totalQuestions} answered</span>
+                        <span className="text-emerald-600">{correctAnswers} correct</span>
+                    </div>
+                    <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                        <div className="h-full rounded-full transition-all duration-700"
+                            style={{ width: `${progressPct}%`, backgroundColor: meta.accent }} />
+                    </div>
+                </div>
+            )}
+
+            {/* CTA */}
+            <div className="mt-auto space-y-2">
+                {noQuestions ? (
+                    <div className="w-full py-3.5 rounded-2xl text-center text-[10px] font-bold uppercase tracking-widest text-slate-300 bg-slate-50">
+                        No Questions Yet
+                    </div>
+                ) : isComplete ? (
+                    <>
+                        <div className="flex justify-between items-center px-4 py-3 rounded-2xl border"
+                            style={{ backgroundColor: meta.accent + '10', borderColor: meta.accent + '30' }}>
+                            <span className="text-xs font-bold" style={{ color: meta.accent }}>{correctAnswers}/{answeredQuestions} · {pct}%</span>
+                            <span className="material-symbols-outlined text-base" style={{ color: meta.accent }}>emoji_events</span>
+                        </div>
+                        <button onClick={() => onChallenge(true)}
+                            className="w-full py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest border-2 border-slate-100 text-slate-400 hover:border-saffron hover:text-saffron transition-all">
+                            ↺ Retake Challenge
+                        </button>
+                    </>
+                ) : hasStarted ? (
+                    <button onClick={() => onChallenge(false)}
+                        className="w-full py-4 rounded-2xl text-sm font-black uppercase tracking-widest text-white shadow-lg transition-all hover:brightness-110 hover:-translate-y-0.5 active:scale-95"
+                        style={{ backgroundColor: meta.accent, boxShadow: `0 8px 20px ${meta.accent}40` }}>
+                        Continue · {totalArticles - completedArticles} Articles Left
+                    </button>
                 ) : (
-                    <button onClick={onAudit} className={`w-full py-5 rounded-2xl font-bold uppercase tracking-widest transition-all text-white shadow-xl shadow-slate-200/50 ${bgColor} hover:brightness-90 active:scale-95`}>
-                        Audit Zone Now
+                    <button onClick={() => onChallenge(false)}
+                        className="w-full py-4 rounded-2xl text-sm font-black uppercase tracking-widest text-white shadow-lg transition-all hover:brightness-110 hover:-translate-y-0.5 active:scale-95"
+                        style={{ backgroundColor: meta.accent, boxShadow: `0 8px 20px ${meta.accent}40` }}>
+                        Start Challenge
                     </button>
                 )}
             </div>
         </div>
     );
-};
+}
+
+// ─── Challenge Modal ──────────────────────────────────────────────────────────
+
+function ChallengeModal({ category, queue, onClose }: {
+    category: string; queue: QuizEntry[]; onClose: () => void;
+}) {
+    const meta = CATEGORY_MAP[category] ?? { icon: 'quiz', accent: '#FF9933', type: 'wisdom' };
+    const [index, setIndex] = useState(0);
+    const [selectedId, setSelectedId] = useState<number | null>(null);
+    const [answerState, setAnswerState] = useState<'unanswered' | 'correct' | 'incorrect'>('unanswered');
+    const [animating, setAnimating] = useState(false);
+    const [answers, setAnswers] = useState<SessionAnswer[]>([]);
+    const [phase, setPhase] = useState<'quiz' | 'result'>('quiz');
+
+    useEffect(() => {
+        document.body.style.overflow = 'hidden';
+        return () => { document.body.style.overflow = ''; };
+    }, []);
+
+    const sessionCorrect = answers.filter(a => a.isCorrect).length;
+    const sessionTotal = answers.length;
+
+    // Empty state
+    if (queue.length === 0) {
+        return (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
+                <div className="absolute inset-0 bg-spiritual-blue/80 backdrop-blur-md" onClick={onClose} />
+                <div className="relative z-10 bg-white rounded-[2.5rem] p-12 text-center max-w-md shadow-2xl animate-in zoom-in-95 fade-in duration-400">
+                    <span className="material-symbols-outlined text-6xl text-gold mb-4 block">emoji_events</span>
+                    <h3 className="text-2xl font-bold font-serif-title text-spiritual-blue mb-3">All Caught Up!</h3>
+                    <p className="text-slate-500 text-sm mb-8 leading-relaxed">
+                        You've completed all articles in this category. Use <strong>"Retake Challenge"</strong> on the card to test yourself again.
+                    </p>
+                    <button onClick={onClose}
+                        className="px-8 py-4 rounded-2xl text-white font-bold text-xs uppercase tracking-widest shadow-lg"
+                        style={{ backgroundColor: meta.accent }}>
+                        Back to Tracker
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    const current = queue[index];
+
+    const handleSelect = (optionId: number) => {
+        if (answerState !== 'unanswered' || animating) return;
+        const opt = current.question.options.find(o => o.id === optionId)!;
+        setSelectedId(optionId);
+        setAnswerState(opt.is_correct ? 'correct' : 'incorrect');
+    };
+
+    const handleNext = () => {
+        if (animating || answerState === 'unanswered') return;
+        const opt = current.question.options.find(o => o.id === selectedId)!;
+        const newAnswer: SessionAnswer = {
+            articleSlug: current.articleSlug,
+            articleTitle: current.articleTitle,
+            isCorrect: opt.is_correct,
+        };
+        const newAnswers = [...answers, newAnswer];
+
+        const isLast = index >= queue.length - 1;
+        setAnimating(true);
+        setTimeout(() => {
+            setAnswers(newAnswers);
+            if (isLast) {
+                saveAnswersToStorage(newAnswers);
+                setPhase('result');
+            } else {
+                setIndex(i => i + 1);
+                setSelectedId(null);
+                setAnswerState('unanswered');
+            }
+            setAnimating(false);
+        }, 320);
+    };
+
+    const handleStopAndSave = () => {
+        saveAnswersToStorage(answers);
+        onClose();
+    };
+
+    const getOptionClass = (opt: QuizOption) => {
+        const base = 'flex items-start gap-3 w-full text-left px-4 py-3.5 rounded-2xl border-2 transition-all duration-200 ';
+        if (answerState === 'unanswered') {
+            return base + (selectedId === opt.id
+                ? 'border-saffron bg-saffron/5 shadow-sm cursor-pointer'
+                : 'border-gold/15 bg-white hover:border-saffron/50 hover:bg-saffron/5 cursor-pointer');
+        }
+        if (opt.is_correct) return base + 'border-emerald-400 bg-emerald-50';
+        if (opt.id === selectedId) return base + 'border-red-400 bg-red-50';
+        return base + 'border-slate-100 bg-white opacity-50';
+    };
+
+    const getIndicatorClass = (opt: QuizOption, idx: number) => {
+        const base = 'flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center text-[10px] font-black transition-all ';
+        if (answerState === 'unanswered') {
+            return base + (selectedId === opt.id ? 'border-saffron bg-saffron text-white' : 'border-gold/30 text-slate-400');
+        }
+        if (opt.is_correct) return base + 'border-emerald-400 bg-emerald-400 text-white';
+        if (opt.id === selectedId) return base + 'border-red-400 bg-red-400 text-white';
+        return base + 'border-slate-200 text-slate-300';
+    };
+
+    // ── Result phase ──
+    if (phase === 'result') {
+        const finalCorrect = answers.filter(a => a.isCorrect).length;
+        const finalTotal = answers.length;
+        const finalPct = finalTotal > 0 ? Math.round((finalCorrect / finalTotal) * 100) : 0;
+        const xpEarned = finalCorrect * 10;
+        const resultRank = getRank(finalPct);
+
+        return (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 overflow-y-auto">
+                <div className="absolute inset-0 bg-spiritual-blue/80 backdrop-blur-md" onClick={onClose} />
+                <div className="relative z-10 w-full max-w-lg bg-white rounded-[2.5rem] shadow-2xl overflow-hidden my-4 animate-in zoom-in-95 fade-in duration-400">
+                    <div className="h-1.5" style={{ background: `linear-gradient(90deg, ${meta.accent}, #D4AF37)` }} />
+                    <div className="p-8 text-center">
+                        <div className="mb-5">
+                            <ScoreRing correct={finalCorrect} total={finalTotal} size={140} />
+                        </div>
+                        <h3 className="text-2xl font-bold font-serif-title text-spiritual-blue mb-1">Challenge Complete! 🎉</h3>
+                        <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-1">
+                            {category.replace(' - CHARACTER CASE STUDIES', '')}
+                        </p>
+                        <p className="text-lg font-black mb-6" style={{ color: meta.accent }}>
+                            {finalCorrect} / {finalTotal} correct · {finalPct}%
+                        </p>
+
+                        <div className="grid grid-cols-2 gap-3 mb-5">
+                            <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-100">
+                                <div className="text-2xl font-black text-emerald-600">{finalCorrect}</div>
+                                <div className="text-[9px] font-bold uppercase tracking-widest text-emerald-400 mt-0.5">Correct</div>
+                            </div>
+                            <div className="p-4 rounded-2xl bg-red-50 border border-red-100">
+                                <div className="text-2xl font-black text-red-400">{finalTotal - finalCorrect}</div>
+                                <div className="text-[9px] font-bold uppercase tracking-widest text-red-300 mt-0.5">Incorrect</div>
+                            </div>
+                        </div>
+
+                        <div className="flex items-center gap-3 p-4 rounded-2xl bg-yellow-50 border border-yellow-100 mb-5">
+                            <span className="material-symbols-outlined text-yellow-500 text-2xl">bolt</span>
+                            <div className="text-left">
+                                <div className="font-black text-yellow-700">+{xpEarned.toLocaleString()} XP Earned!</div>
+                                <div className="text-[10px] text-yellow-500 font-bold">Rank: {resultRank.label}</div>
+                            </div>
+                        </div>
+
+                        <button onClick={onClose}
+                            className="w-full py-4 rounded-2xl text-white font-bold text-sm uppercase tracking-widest shadow-lg transition-all hover:brightness-110"
+                            style={{ backgroundColor: meta.accent, boxShadow: `0 8px 20px ${meta.accent}40` }}>
+                            Back to Tracker
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    // ── Quiz phase ──
+    const sortedOptions = [...current.question.options].sort((a, b) => a.order - b.order);
+    const pctThrough = ((index + (answerState !== 'unanswered' ? 1 : 0)) / queue.length) * 100;
+
+    return (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 overflow-y-auto">
+            <div className="absolute inset-0 bg-spiritual-blue/80 backdrop-blur-md" onClick={handleStopAndSave} />
+            <div
+                className="relative z-10 w-full max-w-2xl bg-white rounded-[2.5rem] shadow-2xl overflow-hidden my-4"
+                style={{ opacity: animating ? 0 : 1, transform: animating ? 'translateY(8px)' : 'translateY(0)', transition: 'opacity 0.28s ease, transform 0.28s ease' }}
+            >
+                {/* Category progress bar */}
+                <div className="h-1.5 bg-slate-100">
+                    <div className="h-full transition-all duration-500 ease-out"
+                        style={{ width: `${pctThrough}%`, backgroundColor: meta.accent }} />
+                </div>
+
+                <div className="p-7 lg:p-9">
+                    {/* Modal header */}
+                    <div className="flex items-center justify-between mb-6">
+                        <div className="flex items-center gap-3 min-w-0">
+                            <div className="flex-shrink-0 w-9 h-9 rounded-xl flex items-center justify-center"
+                                style={{ backgroundColor: meta.accent + '18' }}>
+                                <span className="material-symbols-outlined text-base" style={{ color: meta.accent }}>{meta.icon}</span>
+                            </div>
+                            <div className="min-w-0">
+                                <div className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400">
+                                    Q {index + 1} / {queue.length}
+                                </div>
+                                <div className="text-[10px] font-bold text-slate-500 truncate max-w-[220px]">
+                                    {current.articleTitle.replace(/^\d+\.\s*/, '')}
+                                </div>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-3 flex-shrink-0">
+                            {sessionTotal > 0 && (
+                                <div className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 rounded-full">
+                                    <span className="text-emerald-600 font-black text-xs">{sessionCorrect}</span>
+                                    <span className="text-slate-300 text-xs">/</span>
+                                    <span className="text-slate-500 font-bold text-xs">{sessionTotal}</span>
+                                </div>
+                            )}
+                            <button onClick={handleStopAndSave}
+                                className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-slate-100 text-slate-400 transition-all"
+                                title="Stop & Save Progress">
+                                <span className="material-symbols-outlined text-lg">close</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Dot progress indicators (max 20 shown) */}
+                    {queue.length <= 30 && (
+                        <div className="flex flex-wrap gap-1.5 mb-5">
+                            {queue.map((_, i) => (
+                                <div key={i} className="h-1.5 rounded-full transition-all duration-300"
+                                    style={{
+                                        width: i === index ? '24px' : '8px',
+                                        backgroundColor: i < index ? '#10b981' : i === index ? meta.accent : '#e2e8f0'
+                                    }} />
+                            ))}
+                        </div>
+                    )}
+
+                    {/* Question text */}
+                    <p className="text-lg font-bold text-spiritual-blue font-serif-title leading-snug mb-6">
+                        {current.question.question_text}
+                    </p>
+
+                    {/* Options */}
+                    <div className="space-y-2.5 mb-6">
+                        {sortedOptions.map((opt, idx) => (
+                            <button key={opt.id} id={`tracker-opt-${opt.id}`}
+                                onClick={() => handleSelect(opt.id)}
+                                disabled={answerState !== 'unanswered'}
+                                className={getOptionClass(opt)}
+                            >
+                                <span className={getIndicatorClass(opt, idx)}>
+                                    {answerState !== 'unanswered'
+                                        ? opt.is_correct ? '✓' : opt.id === selectedId ? '✗' : optionLetters[idx]
+                                        : optionLetters[idx]}
+                                </span>
+                                <span className="text-sm font-medium text-slate-700 leading-relaxed text-left">
+                                    {opt.option_text}
+                                </span>
+                            </button>
+                        ))}
+                    </div>
+
+                    {/* Feedback banner */}
+                    {answerState !== 'unanswered' && (
+                        <div className={`flex items-start gap-3 px-4 py-3.5 rounded-2xl mb-5 text-sm animate-in fade-in slide-in-from-bottom-2 duration-300
+                            ${answerState === 'correct' ? 'bg-emerald-50 border border-emerald-200 text-emerald-700' : 'bg-red-50 border border-red-200 text-red-700'}`}>
+                            <span className="material-symbols-outlined text-base flex-shrink-0 mt-0.5">
+                                {answerState === 'correct' ? 'check_circle' : 'cancel'}
+                            </span>
+                            <div>
+                                <span className="font-bold">
+                                    {answerState === 'correct' ? '✓ Correct! +10 XP' : '✗ Incorrect.'}
+                                </span>
+                                {answerState === 'incorrect' && (
+                                    <p className="text-xs mt-0.5 opacity-80">
+                                        Correct answer: {current.question.options.find(o => o.is_correct)?.option_text}
+                                    </p>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Next / Finish button */}
+                    <button id="tracker-next-btn" onClick={handleNext}
+                        disabled={answerState === 'unanswered'}
+                        className={`w-full py-4 rounded-2xl text-sm font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all
+                            ${answerState === 'unanswered'
+                                ? 'bg-slate-100 text-slate-300 cursor-not-allowed'
+                                : 'text-white shadow-lg hover:brightness-110 hover:-translate-y-0.5 active:scale-95'}`}
+                        style={answerState !== 'unanswered' ? { backgroundColor: meta.accent, boxShadow: `0 8px 20px ${meta.accent}40` } : {}}>
+                        {index >= queue.length - 1
+                            ? <><span className="material-symbols-outlined text-base">done_all</span> Finish Challenge</>
+                            : <><span className="material-symbols-outlined text-base">arrow_forward</span> Next Question</>}
+                    </button>
+
+                    <p className="text-center text-[9px] font-bold uppercase tracking-widest text-slate-300 mt-4">
+                        Close / ✕ to stop and save progress
+                    </p>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+// ─── Main TrackerContent ──────────────────────────────────────────────────────
+
+function TrackerContent() {
+    const searchParams = useSearchParams();
+    const currentLang = (searchParams.get('lang') || 'en') as string;
+
+    const [allArticles, setAllArticles] = useState<Article[]>([]);
+    const [quizScores, setQuizScores] = useState<Record<string, SavedScore>>({});
+    const [loading, setLoading] = useState(true);
+    const [challengeCategory, setChallengeCategory] = useState<string | null>(null);
+    const [retakeMode, setRetakeMode] = useState(false);
+
+    useEffect(() => {
+        (async () => {
+            try {
+                const res = await fetch(`https://api.askharekrishna.com/api/v1/brahmhacarya/?language=${currentLang}`);
+                const data = await res.json();
+                setAllArticles(Array.isArray(data) ? data : data.results ?? []);
+            } catch (e) {
+                console.error('Tracker fetch failed', e);
+            } finally {
+                setLoading(false);
+            }
+        })();
+        const saved = JSON.parse(localStorage.getItem('quiz_scores') || '{}');
+        setQuizScores(saved);
+    }, [currentLang]);
+
+    const refreshScores = useCallback(() => {
+        const saved = JSON.parse(localStorage.getItem('quiz_scores') || '{}');
+        setQuizScores(saved);
+    }, []);
+
+    const byCategory = useMemo(() =>
+        allArticles.reduce((acc, a) => {
+            if (!acc[a.category]) acc[a.category] = [];
+            acc[a.category].push(a);
+            return acc;
+        }, {} as Record<string, Article[]>),
+        [allArticles]
+    );
+
+    const getCategoryStats = useCallback((cat: string): CatStats => {
+        const articles = byCategory[cat] ?? [];
+        let totalQ = 0, answeredQ = 0, correctA = 0, completedArts = 0;
+        articles.forEach(a => {
+            const activeCount = a.questions.filter(q => q.is_active && q.options.length > 0).slice(0, 10).length;
+            totalQ += activeCount;
+            if (quizScores[a.slug]) {
+                answeredQ += quizScores[a.slug].total;
+                correctA += quizScores[a.slug].score;
+                completedArts += 1;
+            }
+        });
+        return {
+            totalArticles: articles.length, totalQuestions: totalQ,
+            completedArticles: completedArts, answeredQuestions: answeredQ,
+            correctAnswers: correctA, pct: answeredQ > 0 ? Math.round((correctA / answeredQ) * 100) : 0,
+        };
+    }, [byCategory, quizScores]);
+
+    const globalStats = useMemo(() => {
+        let totalQ = 0, answeredQ = 0, correctA = 0;
+        allArticles.forEach(a => { totalQ += a.questions.filter(q => q.is_active && q.options.length > 0).slice(0, 10).length; });
+        Object.values(quizScores).forEach(s => { answeredQ += s.total; correctA += s.score; });
+        const pct = answeredQ > 0 ? Math.round((correctA / answeredQ) * 100) : 0;
+        return { totalQ, answeredQ, correctA, pct, xp: correctA * 10, articlesDone: Object.keys(quizScores).length };
+    }, [allArticles, quizScores]);
+
+    const buildQueue = useCallback((cat: string, retake: boolean): QuizEntry[] => {
+        const articles = (byCategory[cat] ?? []).slice().sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+        const queue: QuizEntry[] = [];
+        articles
+            .filter(a => retake || !quizScores[a.slug])
+            .forEach(a => {
+                a.questions
+                    .filter(q => q.is_active && q.options.length > 0)
+                    .sort((x, y) => x.order - y.order)
+                    .slice(0, 10)
+                    .forEach(q => queue.push({ question: q, articleSlug: a.slug, articleTitle: a.title }));
+            });
+        return queue;
+    }, [byCategory, quizScores]);
+
+    const rank = getRank(globalStats.pct);
+    const trapCats = useMemo(() => Object.keys(byCategory).filter(c => CATEGORY_MAP[c]?.type === 'trap'), [byCategory]);
+    const wisdomCats = useMemo(() => Object.keys(byCategory).filter(c => CATEGORY_MAP[c]?.type === 'wisdom'), [byCategory]);
+    const otherCats = useMemo(() => Object.keys(byCategory).filter(c => !CATEGORY_MAP[c]), [byCategory]);
+
+    if (loading) return (
+        <div className="min-h-screen flex flex-col items-center justify-center bg-background-light gap-5">
+            <div className="h-16 w-16 border-4 border-slate-100 border-t-saffron rounded-full animate-spin" />
+            <p className="text-spiritual-blue font-bold uppercase tracking-widest text-xs animate-pulse">Loading Challenge Arena...</p>
+        </div>
+    );
+
+    return (
+        <div className="relative flex min-h-screen w-full flex-col bg-background-light">
+            <Header />
+            <main className="flex-1 px-6 py-16 lg:px-20 lg:py-24">
+                <div className="max-w-7xl mx-auto">
+
+                    {/* ── Page Header ── */}
+                    <div className="mb-14 text-center">
+                        <span className="inline-block text-[10px] font-black uppercase tracking-[0.4em] text-saffron mb-4">
+                            Knowledge Challenge Arena
+                        </span>
+                        <h1 className="text-4xl lg:text-5xl font-bold font-serif-title text-spiritual-blue tracking-tight mb-4">
+                            MCQ <span className="text-saffron italic">Mastery</span> Tracker
+                        </h1>
+                        <p className="text-slate-500 max-w-xl mx-auto leading-relaxed">
+                            Answer real questions from every article. Earn XP, climb ranks, and prove your mastery of Brahmacharya wisdom.
+                        </p>
+                    </div>
+
+                    {/* ── Global Score Banner ── */}
+                    <div className="mb-16 rounded-[2.5rem] bg-gradient-to-br from-spiritual-blue via-slate-800 to-slate-900 text-white overflow-hidden relative shadow-2xl shadow-spiritual-blue/30">
+                        {/* Decorative blobs */}
+                        <div className="absolute top-0 right-0 w-80 h-80 rounded-full bg-white/5 translate-x-1/2 -translate-y-1/2 pointer-events-none" />
+                        <div className="absolute bottom-0 left-0 w-56 h-56 rounded-full bg-saffron/10 -translate-x-1/3 translate-y-1/3 pointer-events-none" />
+
+                        <div className="relative z-10 p-8 lg:p-12">
+                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 items-center">
+
+                                {/* Score ring */}
+                                <div className="flex flex-col items-center gap-3">
+                                    <ScoreRing correct={globalStats.correctA} total={globalStats.answeredQ} size={150} />
+                                    <div className="text-center">
+                                        <div className="text-xs font-bold text-white/50 uppercase tracking-widest">Overall Accuracy</div>
+                                        <div className="text-xs text-white/30">{globalStats.correctA} correct of {globalStats.answeredQ} answered</div>
+                                    </div>
+                                </div>
+
+                                {/* Rank badge */}
+                                <div className="flex flex-col items-center gap-3 text-center">
+                                    <div className="w-18 h-18 w-16 h-16 rounded-2xl bg-white/10 flex items-center justify-center border border-white/10">
+                                        <span className="material-symbols-outlined text-4xl" style={{ color: rank.color }}>{rank.icon}</span>
+                                    </div>
+                                    <div className="text-xl font-black font-serif-title" style={{ color: rank.color }}>{rank.label}</div>
+                                    <div className="text-xs text-white/40 uppercase tracking-widest">Current Rank</div>
+                                    <div className="flex items-center gap-2 px-5 py-2 bg-white/10 rounded-full border border-white/10">
+                                        <span className="material-symbols-outlined text-sm text-yellow-400">bolt</span>
+                                        <span className="font-black text-yellow-300 text-sm">{globalStats.xp.toLocaleString()} XP</span>
+                                    </div>
+                                    <div className="text-xs text-white/30">{globalStats.articlesDone} articles completed</div>
+                                </div>
+
+                                {/* Stat grid */}
+                                <div className="grid grid-cols-2 gap-3">
+                                    {[
+                                        { val: globalStats.answeredQ, label: 'Questions Answered', color: 'text-white' },
+                                        { val: globalStats.totalQ, label: 'Total Available', color: 'text-white/60' },
+                                        { val: globalStats.correctA, label: 'Correct Answers', color: 'text-emerald-400' },
+                                        { val: globalStats.answeredQ - globalStats.correctA, label: 'Incorrect', color: 'text-red-400' },
+                                    ].map(({ val, label, color }) => (
+                                        <div key={label} className="bg-white/8 rounded-2xl p-4 text-center border border-white/10">
+                                            <div className={`text-2xl font-black ${color}`}>{val.toLocaleString()}</div>
+                                            <div className="text-[9px] font-bold uppercase tracking-widest text-white/40 mt-1">{label}</div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Rank progress bar */}
+                            <div className="mt-10 pt-8 border-t border-white/10">
+                                <div className="flex justify-between text-[9px] font-bold uppercase tracking-widest text-white/30 mb-2">
+                                    <span>Seeking Soul (0%)</span>
+                                    <span>Liberated Scholar (95%+)</span>
+                                </div>
+                                <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+                                    <div className="h-full rounded-full transition-all duration-1000"
+                                        style={{ width: `${globalStats.pct}%`, background: 'linear-gradient(90deg, #FF9933, #D4AF37, #10b981)' }} />
+                                </div>
+                                <div className="flex justify-between text-[9px] text-white/20 mt-1">
+                                    {RANKS.slice().reverse().map(r => (
+                                        <span key={r.label} className="hidden sm:block">{r.min}%</span>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* ── Rank Legend ── */}
+                    <div className="mb-14 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+                        {RANKS.slice().reverse().map(r => (
+                            <div key={r.label}
+                                className={`flex flex-col items-center gap-2 p-3 rounded-2xl border-2 transition-all ${globalStats.pct >= r.min ? 'border-gold/20 bg-white shadow-sm' : 'border-slate-100 bg-slate-50 opacity-40'}`}>
+                                <span className="material-symbols-outlined text-xl" style={{ color: r.color }}>{r.icon}</span>
+                                <span className="text-[9px] font-black uppercase tracking-widest text-center leading-tight" style={{ color: globalStats.pct >= r.min ? r.color : '#94a3b8' }}>
+                                    {r.label}
+                                </span>
+                                <span className="text-[8px] font-bold text-slate-300">{r.min}%+</span>
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* ── Distraction Zones ── */}
+                    {trapCats.length > 0 && (
+                        <section className="mb-20">
+                            <div className="flex items-center gap-4 mb-10">
+                                <span className="material-symbols-outlined text-red-500 text-2xl">security_update_warning</span>
+                                <h2 className="text-xl font-bold font-serif-title text-red-600">Distraction Zone Challenges</h2>
+                                <div className="h-px flex-1 bg-gradient-to-r from-red-200 to-transparent" />
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-7">
+                                {trapCats.map(cat => (
+                                    <CategoryCard key={cat} cat={cat} stats={getCategoryStats(cat)}
+                                        onChallenge={(retake) => { setChallengeCategory(cat); setRetakeMode(retake); }} />
+                                ))}
+                            </div>
+                        </section>
+                    )}
+
+                    {/* ── Wisdom Zones ── */}
+                    {wisdomCats.length > 0 && (
+                        <section className="mb-20">
+                            <div className="flex items-center gap-4 mb-10">
+                                <span className="material-symbols-outlined text-indigo-500 text-2xl">auto_stories</span>
+                                <h2 className="text-xl font-bold font-serif-title text-indigo-700">Wisdom Zone Challenges</h2>
+                                <div className="h-px flex-1 bg-gradient-to-r from-indigo-200 to-transparent" />
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-7">
+                                {wisdomCats.map(cat => (
+                                    <CategoryCard key={cat} cat={cat} stats={getCategoryStats(cat)}
+                                        onChallenge={(retake) => { setChallengeCategory(cat); setRetakeMode(retake); }} />
+                                ))}
+                            </div>
+                        </section>
+                    )}
+
+                    {/* ── Other categories ── */}
+                    {otherCats.length > 0 && (
+                        <section className="mb-20">
+                            <div className="flex items-center gap-4 mb-10">
+                                <span className="material-symbols-outlined text-slate-400 text-2xl">folder_open</span>
+                                <h2 className="text-xl font-bold font-serif-title text-slate-500">Other Categories</h2>
+                                <div className="h-px flex-1 bg-gradient-to-r from-slate-200 to-transparent" />
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-7">
+                                {otherCats.map(cat => (
+                                    <CategoryCard key={cat} cat={cat} stats={getCategoryStats(cat)}
+                                        onChallenge={(retake) => { setChallengeCategory(cat); setRetakeMode(retake); }} />
+                                ))}
+                            </div>
+                        </section>
+                    )}
+
+                    {/* ── Reset ── */}
+                    <div className="text-center pt-12 border-t border-gold/10">
+                        <button
+                            onClick={() => { if (confirm('Reset all MCQ scores? This cannot be undone.')) { localStorage.removeItem('quiz_scores'); setQuizScores({}); } }}
+                            className="flex items-center gap-2 mx-auto text-[10px] font-bold uppercase tracking-widest text-slate-300 hover:text-red-400 transition-colors py-2"
+                        >
+                            <span className="material-symbols-outlined text-sm">restart_alt</span>
+                            Reset All Scores
+                        </button>
+                    </div>
+                </div>
+            </main>
+            <Footer lang={currentLang as any} />
+
+            {/* Challenge modal */}
+            {challengeCategory && (
+                <ChallengeModal
+                    key={`${challengeCategory}-${retakeMode}`}
+                    category={challengeCategory}
+                    queue={buildQueue(challengeCategory, retakeMode)}
+                    onClose={() => { setChallengeCategory(null); refreshScores(); }}
+                />
+            )}
+        </div>
+    );
+}
 
 export default function TrackerPage() {
     return (
-        <Suspense fallback={<div>Loading...</div>}>
+        <Suspense fallback={
+            <div className="min-h-screen flex items-center justify-center bg-background-light">
+                <div className="h-14 w-14 border-4 border-slate-100 border-t-saffron rounded-full animate-spin" />
+            </div>
+        }>
             <TrackerContent />
         </Suspense>
     );
