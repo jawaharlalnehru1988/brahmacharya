@@ -1,8 +1,193 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { translations, Language, LANGUAGE_NAMES } from '../lib/translations';
+
+// ─── User Avatar with Dropdown ────────────────────────────────────────────────
+
+interface StoredUser {
+    full_name: string;
+    email: string;
+    phoneNumber?: string;
+    whatsappNumber?: string;
+    registered_at?: string;
+}
+
+function getInitials(name: string): string {
+    const parts = name.trim().split(/\s+/);
+    if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
+    return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+}
+
+function UserAvatar({ lang }: { lang: Language }) {
+    const [user, setUser] = useState<StoredUser | null>(null);
+    const [dropdownOpen, setDropdownOpen] = useState(false);
+    const dropdownRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const raw = localStorage.getItem('brahmacharya_user');
+        if (raw) {
+            try { setUser(JSON.parse(raw)); } catch {}
+        }
+    }, []);
+
+    // Close dropdown on outside click
+    useEffect(() => {
+        const handler = (e: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+                setDropdownOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handler);
+        return () => document.removeEventListener('mousedown', handler);
+    }, []);
+
+    const handleLogout = () => {
+        localStorage.removeItem('brahmacharya_user');
+        localStorage.removeItem('quiz_scores');
+        setUser(null);
+        setDropdownOpen(false);
+        window.location.reload();
+    };
+
+    if (!user) {
+        // Not logged in — show Prabhupada avatar placeholder
+        return (
+            <div
+                className="h-10 w-10 rounded-full border-2 border-gold/30 bg-cover bg-center overflow-hidden flex-shrink-0"
+                style={{ backgroundImage: "url('/srila_prabhupada.png')" }}
+            />
+        );
+    }
+
+    const initials = getInitials(user.full_name);
+
+    return (
+        <div className="relative flex-shrink-0" ref={dropdownRef}>
+            {/* Avatar Button */}
+            <button
+                id="user-avatar-btn"
+                onClick={() => setDropdownOpen(prev => !prev)}
+                className="relative h-10 w-10 rounded-full border-2 border-gold flex items-center justify-center font-black text-sm text-white shadow-lg shadow-gold/20 hover:scale-105 transition-all focus:outline-none"
+                style={{ background: 'linear-gradient(135deg, #FF9933, #D4AF37)' }}
+                aria-label="User menu"
+                aria-expanded={dropdownOpen}
+            >
+                {initials}
+                {/* Online dot */}
+                <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-emerald-400 border-2 border-white" />
+            </button>
+
+            {/* Dropdown */}
+            {dropdownOpen && (
+                <div
+                    className="absolute right-0 top-[calc(100%+10px)] z-[200] w-64 rounded-[1.5rem] bg-white border border-gold/20 shadow-2xl shadow-spiritual-blue/20 overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+                >
+                    {/* Header strip */}
+                    <div className="h-1 w-full bg-gradient-to-r from-saffron to-gold" />
+
+                    {/* User Info */}
+                    <div className="px-5 py-4 flex items-center gap-3 border-b border-gold/10">
+                        <div
+                            className="h-11 w-11 rounded-full flex items-center justify-center font-black text-base text-white flex-shrink-0 shadow-md"
+                            style={{ background: 'linear-gradient(135deg, #FF9933, #D4AF37)' }}
+                        >
+                            {initials}
+                        </div>
+                        <div className="min-w-0">
+                            <p className="font-bold text-spiritual-blue text-sm truncate">{user.full_name}</p>
+                            <p className="text-[11px] text-slate-400 truncate">{user.email}</p>
+                        </div>
+                    </div>
+
+                    {/* Menu Items */}
+                    <div className="py-2 px-2">
+                        <Link
+                            href={`/tracker?lang=${lang}`}
+                            onClick={() => setDropdownOpen(false)}
+                            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-700 hover:bg-saffron/8 hover:text-saffron transition-all"
+                        >
+                            <span className="material-symbols-outlined text-base text-saffron">emoji_events</span>
+                            My Progress
+                        </Link>
+                        <Link
+                            href={`/join-sangha?lang=${lang}`}
+                            onClick={() => setDropdownOpen(false)}
+                            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-700 hover:bg-saffron/8 hover:text-saffron transition-all"
+                        >
+                            <span className="material-symbols-outlined text-base text-saffron">diversity_3</span>
+                            Sangha Profile
+                        </Link>
+                    </div>
+
+                    {/* Logout */}
+                    <div className="px-2 pb-3 border-t border-red-50 pt-2 mt-1">
+                        <button
+                            id="logout-btn"
+                            onClick={handleLogout}
+                            className="flex w-full items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold text-red-500 hover:bg-red-50 transition-all"
+                        >
+                            <span className="material-symbols-outlined text-base">logout</span>
+                            Logout
+                        </button>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}
+
+// ─── Mobile User Section ──────────────────────────────────────────────────────
+
+function MobileUserSection({ lang, onClose }: { lang: Language; onClose: () => void }) {
+    const [user, setUser] = useState<StoredUser | null>(null);
+
+    useEffect(() => {
+        const raw = localStorage.getItem('brahmacharya_user');
+        if (raw) {
+            try { setUser(JSON.parse(raw)); } catch {}
+        }
+    }, []);
+
+    const handleLogout = () => {
+        localStorage.removeItem('brahmacharya_user');
+        localStorage.removeItem('quiz_scores');
+        setUser(null);
+        onClose();
+        window.location.reload();
+    };
+
+    if (!user) return null;
+
+    const initials = getInitials(user.full_name);
+
+    return (
+        <div className="mx-4 mb-3 rounded-2xl bg-gradient-to-br from-saffron/5 to-gold/5 border border-gold/15 p-4">
+            <div className="flex items-center gap-3 mb-3">
+                <div
+                    className="h-10 w-10 rounded-full flex items-center justify-center font-black text-sm text-white flex-shrink-0 shadow-md"
+                    style={{ background: 'linear-gradient(135deg, #FF9933, #D4AF37)' }}
+                >
+                    {initials}
+                </div>
+                <div className="min-w-0">
+                    <p className="font-bold text-spiritual-blue text-sm truncate">{user.full_name}</p>
+                    <p className="text-[10px] text-slate-400 truncate">{user.email}</p>
+                </div>
+            </div>
+            <button
+                onClick={handleLogout}
+                className="flex w-full items-center justify-center gap-2 py-2 rounded-xl text-xs font-bold uppercase tracking-widest text-red-500 bg-red-50 hover:bg-red-100 transition-all"
+            >
+                <span className="material-symbols-outlined text-sm">logout</span>
+                Logout
+            </button>
+        </div>
+    );
+}
+
+// ─── Header ───────────────────────────────────────────────────────────────────
 
 const HeaderContent = () => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -16,9 +201,6 @@ const HeaderContent = () => {
     const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
     const setLanguage = (lang: string) => {
-        // If we're on an article detail page, redirect to home in the new language.
-        // Articles don't share slugs across languages, so staying on the same slug
-        // would show a mismatched language UI with the original-language article content.
         if (pathname.startsWith('/articles/')) {
             router.push(`/?lang=${lang}`);
             return;
@@ -59,7 +241,7 @@ const HeaderContent = () => {
                                 {link.label}
                             </Link>
                         ))}
-                        
+
                         {/* Language Switcher Desktop */}
                         <div className="flex items-center gap-2 border-l border-gold/20 pl-6 ml-2">
                             <select
@@ -81,7 +263,8 @@ const HeaderContent = () => {
                         </div>
                     </nav>
 
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-3">
+                        {/* Join Sangha button — desktop only, hidden when user is logged in (avatar takes its place) */}
                         <Link
                             href={`/join-sangha?lang=${currentLang}`}
                             className="hidden sm:flex h-10 items-center justify-center rounded-full px-6 text-sm font-bold text-white shadow-lg shadow-blue-900/20 hover:bg-slate-800 transition-all no-underline"
@@ -89,12 +272,11 @@ const HeaderContent = () => {
                         >
                             {t.btn_join_sangha}
                         </Link>
-                        <div
-                            className="h-10 w-10 rounded-full border-2 border-gold/30 bg-cover bg-center overflow-hidden"
-                            style={{ backgroundImage: "url('/srila_prabhupada.png')" }}
-                        ></div>
 
-                        {/* Mobile Language Switcher (Visible in Mobile Logo Area) */}
+                        {/* User Avatar (shows initials if registered, Prabhupada avatar if not) */}
+                        <UserAvatar lang={currentLang} />
+
+                        {/* Mobile Language Switcher */}
                         <div className="flex md:hidden items-center gap-1 border border-gold/20 rounded-lg px-2 h-10 bg-white/50 relative">
                             <select
                                 value={currentLang}
@@ -130,7 +312,7 @@ const HeaderContent = () => {
             <div
                 className={`fixed inset-0 z-[60] bg-slate-900/40 backdrop-blur-sm transition-opacity duration-300 md:hidden ${isMenuOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
                 onClick={toggleMenu}
-            ></div>
+            />
 
             {/* Mobile Sidebar */}
             <aside
@@ -161,9 +343,10 @@ const HeaderContent = () => {
                                 <span className="material-symbols-outlined ml-auto text-sm opacity-0 group-hover:opacity-100 transition-opacity">arrow_forward</span>
                             </Link>
                         ))}
-
-
                     </nav>
+
+                    {/* Mobile User Section */}
+                    <MobileUserSection lang={currentLang} onClose={() => setIsMenuOpen(false)} />
 
                     <div className="p-6 border-t border-gold/10 bg-white">
                         <Link

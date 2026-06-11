@@ -15,8 +15,8 @@ interface RegistrationModalProps {
 export interface UserData {
     full_name: string;
     email: string;
-    phone_number: string;
-    whatsapp_number: string;
+    phoneNumber: string;
+    whatsappNumber: string;
 }
 
 type FormState = 'idle' | 'submitting' | 'success' | 'error';
@@ -36,8 +36,8 @@ export default function RegistrationModal({
     const [form, setForm] = useState<UserData>({
         full_name: '',
         email: '',
-        phone_number: '',
-        whatsapp_number: '',
+        phoneNumber: '',
+        whatsappNumber: '',
     });
 
     // Trap focus inside modal + close on Escape
@@ -75,6 +75,26 @@ export default function RegistrationModal({
             );
             // Store user in localStorage so we don't ask again
             localStorage.setItem('brahmacharya_user', JSON.stringify({ ...form, registered_at: new Date().toISOString() }));
+
+            // Also save the quiz score to the backend if scoreContext is provided
+            if (scoreContext && form.full_name && form.phoneNumber) {
+                try {
+                    await axios.post(
+                        'https://api.askharekrishna.com/api/v1/brahmhacarya/score/',
+                        {
+                            userName: form.full_name,
+                            phoneNumber: form.phoneNumber,
+                            articleTitle: scoreContext.articleTitle,
+                            score: scoreContext.score,
+                            totalQuestions: scoreContext.total,
+                        }
+                    );
+                } catch (scoreErr) {
+                    // Non-fatal: score save failure should not block registration success
+                    console.warn('Score save failed (non-fatal):', scoreErr);
+                }
+            }
+
             setFormState('success');
             setTimeout(() => {
                 onSuccess(form);
@@ -194,9 +214,9 @@ export default function RegistrationModal({
                                         <input
                                             id="reg-phone"
                                             type="tel"
-                                            name="phone_number"
+                                            name="phoneNumber"
                                             placeholder={t.reg_phone_placeholder}
-                                            value={form.phone_number}
+                                            value={form.phoneNumber}
                                             onChange={handleChange}
                                             className="w-full px-5 py-3.5 rounded-2xl border-2 border-gold/20 bg-deep-cream/50 text-spiritual-blue placeholder-slate-300 text-sm font-medium focus:outline-none focus:border-saffron focus:bg-white transition-all"
                                         />
@@ -208,9 +228,9 @@ export default function RegistrationModal({
                                         <input
                                             id="reg-whatsapp"
                                             type="tel"
-                                            name="whatsapp_number"
+                                            name="whatsappNumber"
                                             placeholder={t.reg_whatsapp_placeholder}
-                                            value={form.whatsapp_number}
+                                            value={form.whatsappNumber}
                                             onChange={handleChange}
                                             className="w-full px-5 py-3.5 rounded-2xl border-2 border-gold/20 bg-deep-cream/50 text-spiritual-blue placeholder-slate-300 text-sm font-medium focus:outline-none focus:border-saffron focus:bg-white transition-all"
                                         />

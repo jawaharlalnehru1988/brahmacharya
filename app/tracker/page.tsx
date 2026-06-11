@@ -275,11 +275,11 @@ function ChallengeModal({ category, queue, onClose, lang, t }: {
     const submitScore = async (userData: UserData, scoreContext: { score: number; total: number; articleTitle: string }) => {
         try {
             await axios.post('https://api.askharekrishna.com/api/v1/brahmhacarya/score/', {
-                user_name: userData.full_name,
-                phone_number: userData.phone_number || userData.whatsapp_number || 'N/A',
-                article_title: scoreContext.articleTitle,
+                userName: userData.full_name,
+                phoneNumber: userData.phoneNumber || userData.whatsappNumber || 'N/A',
+                articleTitle: scoreContext.articleTitle,
                 score: scoreContext.score,
-                total_questions: scoreContext.total,
+                totalQuestions: scoreContext.total,
             });
             console.log("Score saved successfully!");
         } catch (e) {
